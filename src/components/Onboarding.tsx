@@ -66,7 +66,7 @@ export function Onboarding() {
       <div className="flex flex-col px-6 py-8 sm:px-12">
         <div className="flex items-center justify-between">
           <Link href="/" className="display text-2xl tracking-normal">
-            Minna.
+            Minna<span className="text-vermilion">.</span>
           </Link>
           <p className="text-xs text-ink-2">
             Step {step + 1} of {STEPS.length}

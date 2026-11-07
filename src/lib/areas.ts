@@ -2,7 +2,7 @@ import type { AreaId, NagLevel, Repeat, Tone } from "./types";
 
 export const AREAS: Record<AreaId, { label: string; dot: string }> = {
   privat: { label: "Personal", dot: "#2f9e6e" },
-  jobb: { label: "Work", dot: "#264eff" },
+  jobb: { label: "Work", dot: "#1f7dbf" },
   skola: { label: "School", dot: "#b07a1f" },
 };
 

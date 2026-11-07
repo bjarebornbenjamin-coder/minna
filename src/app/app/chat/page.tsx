@@ -268,11 +268,11 @@ export default function ChatPage() {
                 {suggestions.map((s) => (
                   <li key={s}>
                     <button
-                      className="group flex w-full items-center justify-between border-b border-line py-3 text-left transition-colors hover:text-accent"
+                      className="group flex w-full items-center justify-between border-b border-line py-3 text-left transition-colors hover:text-accent-ink-ink"
                       onClick={() => send(s)}
                     >
                       <span>{s}</span>
-                      <span className="text-ink-2 transition-transform group-hover:translate-x-1 group-hover:text-accent" aria-hidden>
+                      <span className="text-ink-2 transition-transform group-hover:translate-x-1 group-hover:text-accent-ink" aria-hidden>
                         →
                       </span>
                     </button>
@@ -380,7 +380,7 @@ function MessageView({ msg, actions, onUndo }: { msg: ChatMessage; actions: Reco
             if (!a) return null;
             return (
               <li key={t.id} className={`flex items-baseline gap-3 py-1 text-sm ${a.undone ? "line-through opacity-40" : ""}`}>
-                <span className={`w-24 shrink-0 text-xs font-medium uppercase tracking-wide ${a.error ? "text-[#b42318]" : "text-accent"}`}>
+                <span className={`w-24 shrink-0 text-xs font-medium uppercase tracking-wide ${a.error ? "text-[#b42318]" : "text-accent-ink"}`}>
                   {a.undone ? "Undone" : a.label}
                 </span>
                 <span className="min-w-0 flex-1">{a.text}</span>

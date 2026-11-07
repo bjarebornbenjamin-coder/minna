@@ -55,7 +55,7 @@ export default function SettingsPage() {
 
   const toggleRow = (checked: boolean, onChange: (v: boolean) => void, title: string, desc: string) => (
     <label className="flex items-start gap-3 cursor-pointer">
-      <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[#264eff]" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[#1f7dbf]" checked={checked} onChange={(e) => onChange(e.target.checked)} />
       <span>
         <span className="block text-sm font-medium">{title}</span>
         <span className="block text-xs text-ink-2">{desc}</span>
@@ -93,7 +93,7 @@ export default function SettingsPage() {
       <div className="card flex flex-col gap-2">
         {AREA_IDS.map((a) => (
           <label key={a} className="flex items-center gap-3 cursor-pointer py-1">
-            <input type="checkbox" className="h-4 w-4 accent-[#264eff]" checked={settings.areas.includes(a)} onChange={() => toggleArea(a)} />
+            <input type="checkbox" className="h-4 w-4 accent-[#1f7dbf]" checked={settings.areas.includes(a)} onChange={() => toggleArea(a)} />
             <span className="font-medium">{AREAS[a].label}</span>
           </label>
         ))}

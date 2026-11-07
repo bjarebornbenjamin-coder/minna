@@ -40,7 +40,7 @@ export function ReminderRow({ r, now }: { r: Reminder; now: Date }) {
 
   return (
     <li className={`group relative flex items-start gap-3 border-b border-line py-3.5 ${r.done ? "opacity-50" : ""}`}>
-      {overdue && <span aria-hidden className={`absolute -left-3 top-4 bottom-4 w-0.5 ${mom ? "bg-amber" : "bg-accent"}`} />}
+      {overdue && <span aria-hidden className={`absolute -left-3 top-4 bottom-4 w-0.5 ${mom ? "bg-amber" : "bg-vermilion"}`} />}
       <button
         onClick={() => completeReminder(r.id)}
         className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border transition-colors ${

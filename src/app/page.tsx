@@ -33,7 +33,7 @@ export default function Home() {
       <header className="absolute inset-x-0 top-0 z-30">
         <div className="mx-auto flex max-w-[1600px] items-center justify-between px-5 py-5 sm:px-10 sm:py-7">
           <Link href="/" className="display text-[28px] tracking-normal sm:text-[32px]">
-            Minna.
+            Minna<span className="text-vermilion">.</span>
           </Link>
           <nav className="flex items-center gap-8 text-sm" aria-label="Main">
             {NAV.map((n) => (
@@ -58,7 +58,7 @@ export default function Home() {
                 className="block animate-rise text-right text-[31vw] leading-[0.8] sm:text-[24vw] 2xl:text-[23rem]"
                 style={{ animationDelay: "120ms" }}
               >
-                Minna.
+                Minna<span className="text-vermilion">.</span>
               </span>
             </h1>
             {/* The Core sits in front of the type: beside "Meet", cutting into the top of "Minna." */}
@@ -96,7 +96,7 @@ export default function Home() {
               <h2 id="product-title" className="display mt-4 text-[19vw] sm:text-[13vw] xl:text-[12rem]">
                 Your life.
                 <br />
-                <span className="text-accent">Handled.</span>
+                <span className="text-accent-ink">Handled.</span>
               </h2>
             </Reveal>
           </div>
@@ -328,7 +328,7 @@ export default function Home() {
           </div>
 
           <footer className="mx-auto mt-24 flex max-w-[1600px] flex-col gap-4 border-t border-line px-5 pt-6 text-sm text-ink-2 sm:flex-row sm:items-center sm:justify-between sm:px-10">
-            <span className="display text-2xl tracking-normal text-ink">Minna.</span>
+            <span className="display text-2xl tracking-normal text-ink">Minna<span className="text-vermilion">.</span></span>
             <nav className="flex flex-wrap gap-6" aria-label="Footer">
               {NAV.map((n) => (
                 <a key={n.href} href={n.href} className="hover:text-ink">

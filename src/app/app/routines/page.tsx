@@ -76,7 +76,7 @@ export default function RoutinesPage() {
           <li key={r.id}>
             <button onClick={() => setEditing(r)} className="group flex w-full items-baseline gap-4 border-b border-line py-4 text-left">
               <span className="min-w-0 flex-1">
-                <span className="block font-medium group-hover:text-accent">{r.name}</span>
+                <span className="block font-medium group-hover:text-accent-ink">{r.name}</span>
                 <span className="mt-1 block text-sm text-ink-2">
                   {describeDays(r.days)} at {formatClock(r.time)} · {r.items.length} items · {NAG_LEVELS[r.nag].label}
                 </span>

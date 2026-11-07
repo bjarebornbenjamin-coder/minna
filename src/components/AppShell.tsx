@@ -56,7 +56,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <NagEngine />
       <aside className="hidden md:flex md:w-56 md:shrink-0 md:flex-col md:sticky md:top-0 md:h-dvh border-r border-line px-6 py-7">
         <Link href="/" className="display text-[28px] tracking-normal mb-10">
-          Minna.
+          Minna<span className="text-vermilion">.</span>
         </Link>
         <nav className="flex flex-col gap-0.5" aria-label="App">
           {nav.map((n) => {
@@ -81,7 +81,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex-1 min-w-0">
         <header className="md:hidden sticky top-0 z-30 flex items-center justify-between border-b border-line bg-bg/90 px-4 py-3 backdrop-blur">
           <Link href="/" className="display text-2xl tracking-normal">
-            Minna.
+            Minna<span className="text-vermilion">.</span>
           </Link>
           <Link href="/app/chat" className="btn-primary !py-1.5 !px-3">
             Ask Minna
@@ -104,7 +104,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 aria-current={active ? "page" : undefined}
                 className={`relative flex-1 py-3.5 text-center text-[13px] ${active ? "text-ink font-medium" : "text-ink-2"}`}
               >
-                {active && <span className="absolute top-0 left-1/2 h-0.5 w-6 -translate-x-1/2 bg-accent" />}
+                {active && <span className="absolute top-0 left-1/2 h-0.5 w-6 -translate-x-1/2 bg-vermilion" />}
                 {n.label}
               </Link>
             );

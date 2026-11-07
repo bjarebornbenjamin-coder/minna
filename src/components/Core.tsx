@@ -85,7 +85,7 @@ export function Core({
         {state === "complete" && (
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 rounded-full border-2 border-accent"
+            className="pointer-events-none absolute inset-0 rounded-full border-2 border-accent-ink"
             style={{ animation: "ring 1.2s cubic-bezier(0.16,1,0.3,1) both" }}
           />
         )}

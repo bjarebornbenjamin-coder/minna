@@ -2,14 +2,17 @@
 
 /* Design tokens */
 :root {
-  --bg: #f5f4f0;
-  --bg-2: #eae9e4;
-  --ink: #161616;
-  --ink-2: #666662;
-  --accent: #264eff;
-  --accent-light: #a8c8ff;
+  /* Cloud white, sky blue and a touch of vermilion */
+  --bg: #f7fafd;
+  --bg-2: #e6f3fb;
+  --ink: #0e2233;
+  --ink-2: #5b6e80;
+  --accent: #7cc6ee;
+  --accent-ink: #1f7dbf;
+  --accent-light: #cfeaf9;
   --surface: #ffffff;
-  --line: #dad9d3;
+  --line: #d6e3ee;
+  --vermilion: #e34234;
   --amber: #e5a73a;
   color-scheme: light;
 }
@@ -20,6 +23,8 @@
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
   --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-vermilion: var(--vermilion);
   --color-accent-light: var(--accent-light);
   --color-surface: var(--surface);
   --color-line: var(--line);
@@ -45,9 +50,11 @@ body {
   color: var(--ink);
 }
 
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--accent-ink);
+    outline-offset: 2px;
+  }
 }
 
 @layer components {
@@ -69,7 +76,7 @@ body {
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#1a3fe6] active:bg-[#1435cc] disabled:cursor-not-allowed disabled:opacity-40;
+    @apply inline-flex items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-[#62b9e8] active:bg-[#4faee2] disabled:cursor-not-allowed disabled:opacity-40;
   }
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 rounded-md border border-line bg-surface px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:border-ink/40;
@@ -82,7 +89,7 @@ body {
   }
 
   .input {
-    @apply w-full rounded-md border border-line bg-surface px-3 py-2.5 text-base text-ink outline-none transition-colors placeholder:text-ink-2/70 focus:border-accent sm:text-sm;
+    @apply w-full rounded-md border border-line bg-surface px-3 py-2.5 text-base text-ink outline-none transition-colors placeholder:text-ink-2/70 focus:border-accent-ink sm:text-sm;
   }
   .label {
     @apply mb-1.5 block text-xs font-medium text-ink-2;

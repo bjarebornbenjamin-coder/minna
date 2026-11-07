@@ -38,7 +38,7 @@ export function ChecklistCard({ list, subtitle }: { list: ChecklistInstance; sub
               <label className="flex cursor-pointer select-none items-center gap-3 py-1.5">
                 <input
                   type="checkbox"
-                  className="h-4 w-4 accent-[#264eff]"
+                  className="h-4 w-4 accent-[#1f7dbf]"
                   checked={on}
                   onChange={() => toggleCheck(list.checksKey, item.id)}
                 />

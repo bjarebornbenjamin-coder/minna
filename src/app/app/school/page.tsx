@@ -143,7 +143,7 @@ function SubjectEditor({ subject, onChange, onRemove }: { subject: Subject; onCh
     <div className="card py-3">
       <div className="flex items-center gap-2 mb-2">
         <input
-          className="flex-1 bg-transparent font-medium outline-none focus:underline decoration-accent"
+          className="flex-1 bg-transparent font-medium outline-none focus:underline decoration-accent-ink"
           value={subject.name}
           onChange={(e) => onChange({ name: e.target.value })}
           aria-label="Subject name"
