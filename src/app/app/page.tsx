@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { AreaFilter, type AreaFilterValue } from "@/components/AreaFilter";
 import { ChecklistCard } from "@/components/ChecklistCard";
-import { Core } from "@/components/Core";
+import { Mark } from "@/components/Mark";
 import { NotificationBanner } from "@/components/NotificationBanner";
 import { ReminderForm } from "@/components/ReminderForm";
 import { ReminderRow } from "@/components/ReminderRow";
@@ -60,7 +60,7 @@ export default function TodayPage() {
           </p>
         </div>
         <Link href="/app/chat" aria-label="Ask Minna" className="hidden sm:block">
-          <Core size={150} state={focusActive ? "focus" : "idle"} />
+          <Mark size={120} state={focusActive ? "focus" : "idle"} />
         </Link>
       </header>
 

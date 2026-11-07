@@ -15,7 +15,6 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Minna",
     description: "Your life. More organized. Less overwhelming.",
-    images: ["/assets/minna-editorial/minna-organize.png"],
   },
 };
 

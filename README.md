@@ -45,10 +45,11 @@ All data sparas lokalt i webbläsaren (localStorage).
 ```
 src/
   app/page.tsx    presentationssidan (/)
-  app/app/        appen: /app (Today), /app/chat, /app/tasks, /app/mom-mode,
+  app/app/        appen: /app (Today), /app/chat, /app/tasks, /app/focus,
                   /app/routines, /app/school, /app/memory, /app/settings, /app/more
   components/     UI-komponenter + NagEngine (tjat-motorn)
-  components/Core.tsx  Minna Core (produktbild + diskreta tillstånd i CSS)
+  components/Mark.tsx  Minna-symbolen (Horizon) med tillstånd i CSS
+  components/Burn.tsx  animationen när en uppgift brinner upp
   components/site/     presentationssidans komponenter
   lib/
     types.ts      datamodell
@@ -64,13 +65,3 @@ src/
 5. Jobbfunktioner: mötesförberedelser, uppföljningar, veckorapport.
 6. Konto och synk (Supabase) och push-notiser när appen är stängd.
 7. Mobilapp med Expo.
-
-## Bilder
-
-Higgsfield-bilderna ligger i `public/assets/minna-editorial/`:
-
-- `minna-organize.png`, `minna-workflow.png`, `minna-mom-mode.png`: de levererade bilderna
-- `minna-core-product.png`: kärnan utklippt (rund mask) ur `minna-organize.png`
-
-Saknas fortfarande: `minna-hero-editorial.png`, `minna-hero-mobile.png`, `minna-memory.png`,
-`minna-onboarding.png`, `minna-social-og.png`. Sidan använder kärnan eller ren typografi i stället.

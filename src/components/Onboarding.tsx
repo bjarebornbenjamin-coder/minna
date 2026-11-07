@@ -7,7 +7,7 @@ import { addDays, atTime } from "@/lib/dates";
 import { defaultRoutines } from "@/lib/defaults";
 import { useStore } from "@/lib/store";
 import type { AreaId, Tone } from "@/lib/types";
-import { Core } from "./Core";
+import { Mark } from "./Mark";
 
 const AREA_DESC: Record<AreaId, string> = {
   privat: "Everyday life, home, family, bills, health",
@@ -60,13 +60,16 @@ export function Onboarding() {
           <br />
           there.
         </h1>
-        <Core size="70%" className="absolute -bottom-[8%] right-[-6%]" priority />
+        <Mark size="78%" draw decorative className="absolute -bottom-[14%] -right-[16%]" />
       </div>
 
       <div className="flex flex-col px-6 py-8 sm:px-12">
         <div className="flex items-center justify-between">
-          <Link href="/" className="display text-2xl tracking-normal">
-            Minna<span className="text-vermilion">.</span>
+          <Link href="/" className="flex items-center gap-2">
+            <Mark size={22} decorative />
+            <span className="display text-2xl tracking-normal">
+              Minna<span className="text-vermilion">.</span>
+            </span>
           </Link>
           <p className="text-xs text-ink-2">
             Step {step + 1} of {STEPS.length}
@@ -75,7 +78,7 @@ export function Onboarding() {
 
         <div className="my-auto w-full max-w-md py-12">
           <div className="mb-8 lg:hidden">
-            <Core size={120} />
+            <Mark size={72} draw />
           </div>
           <div key={step} className="animate-rise">
             {step === 0 && (

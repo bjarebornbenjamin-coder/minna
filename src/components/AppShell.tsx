@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { useStore } from "@/lib/store";
+import { Mark } from "./Mark";
 import { NagEngine } from "./NagEngine";
 import { Onboarding } from "./Onboarding";
 
@@ -55,8 +56,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-dvh md:flex">
       <NagEngine />
       <aside className="hidden md:flex md:w-56 md:shrink-0 md:flex-col md:sticky md:top-0 md:h-dvh border-r border-line px-6 py-7">
-        <Link href="/" className="display text-[28px] tracking-normal mb-10">
-          Minna<span className="text-vermilion">.</span>
+        <Link href="/" className="mb-10 flex items-center gap-2.5">
+          <Mark size={24} decorative />
+          <span className="display text-[28px] tracking-normal">
+            Minna<span className="text-vermilion">.</span>
+          </span>
         </Link>
         <nav className="flex flex-col gap-0.5" aria-label="App">
           {nav.map((n) => {
@@ -80,8 +84,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <div className="flex-1 min-w-0">
         <header className="md:hidden sticky top-0 z-30 flex items-center justify-between border-b border-line bg-bg/90 px-4 py-3 backdrop-blur">
-          <Link href="/" className="display text-2xl tracking-normal">
-            Minna<span className="text-vermilion">.</span>
+          <Link href="/" className="flex items-center gap-2">
+            <Mark size={22} decorative />
+            <span className="display text-2xl tracking-normal">
+              Minna<span className="text-vermilion">.</span>
+            </span>
           </Link>
           <Link href="/app/chat" className="btn-primary !py-1.5 !px-3">
             Ask Minna

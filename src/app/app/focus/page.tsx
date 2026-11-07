@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Core } from "@/components/Core";
+import { Mark } from "@/components/Mark";
 import { ReminderRow } from "@/components/ReminderRow";
 import { TONES } from "@/lib/areas";
 import { formatDue } from "@/lib/dates";
@@ -23,7 +23,7 @@ export default function FocusModePage() {
           <p className="eyebrow !text-vermilion">Focus Mode</p>
           <h1 className="display mt-3 text-[clamp(3.5rem,10vw,6.5rem)]">Stay on it.</h1>
         </div>
-        <Core size={120} state={focused.length > 0 ? "focus" : "idle"} className="hidden sm:block" />
+        <Mark size={110} state="focus" className="hidden sm:block" />
       </div>
       <p className="mt-4 max-w-lg text-ink-2">
         For the few things that can&apos;t slip. Minna reminds you at the time you set, then every ten minutes until you mark it

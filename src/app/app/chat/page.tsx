@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { Core, type CoreState } from "@/components/Core";
+import { Mark, type MarkState } from "@/components/Mark";
 import type { AssistantMessage, ChatMessage, ToolResultMessage, TurnResult } from "@/lib/assistant/chat-types";
 import { buildContext } from "@/lib/assistant/context";
 import { executeTool, type ChatAction } from "@/lib/assistant/execute";
@@ -78,13 +78,13 @@ export default function ChatPage() {
   const [error, setError] = useState<{ message: string; code?: string } | null>(null);
   const [listening, setListening] = useState(false);
   const [speechOk, setSpeechOk] = useState(false);
-  const [phase, setPhase] = useState<CoreState>("idle");
+  const [phase, setPhase] = useState<MarkState>("idle");
   const phaseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const recRef = useRef<SpeechRec | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const flash = (p: CoreState, ms = 1600) => {
+  const flash = (p: MarkState, ms = 1600) => {
     if (phaseTimer.current) clearTimeout(phaseTimer.current);
     setPhase(p);
     phaseTimer.current = setTimeout(() => setPhase("idle"), ms);
@@ -243,7 +243,7 @@ export default function ChatPage() {
               New chat
             </button>
           )}
-          {!empty && <Core size={64} state={phase} float={false} shadow={false} tilt={false} />}
+          {!empty && <Mark size={44} state={phase} />}
         </div>
       </div>
 
@@ -261,7 +261,7 @@ export default function ChatPage() {
                 things at once.
               </p>
             </div>
-            <Core size={180} state={phase} className="mx-auto" />
+            <Mark size={170} state={phase} draw className="mx-auto" />
             <div className="sm:col-span-2">
               <p className="eyebrow mb-2">Try</p>
               <ul className="border-t border-line">
