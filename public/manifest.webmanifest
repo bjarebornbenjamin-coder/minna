@@ -1,11 +1,12 @@
 {
-  "name": "Minna – your personal AI assistant",
+  "name": "Minna",
   "short_name": "Minna",
-  "description": "Remembers for you, at home, at work and at school.",
-  "start_url": "/",
+  "description": "Your personal assistant. Remembers for you, at home, at work and at school.",
+  "start_url": "/app",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#05060f",
-  "theme_color": "#05060f",
+  "background_color": "#f5f4f0",
+  "theme_color": "#f5f4f0",
   "lang": "en",
   "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
 }

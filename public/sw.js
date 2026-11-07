@@ -9,7 +9,7 @@ self.addEventListener("notificationclick", (event) => {
       for (const c of clients) {
         if ("focus" in c) return c.focus();
       }
-      return self.clients.openWindow("/");
+      return self.clients.openWindow("/app");
     }),
   );
 });

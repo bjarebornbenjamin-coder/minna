@@ -43,12 +43,12 @@ export function schoolPackFor(state: AppState, date: Date): ChecklistInstance | 
     checksKey: `skola-pack:${dk}`,
     listId: "skola-pack",
     name: `Pack for ${WEEKDAYS[date.getDay()]}`,
-    emoji: "🎒",
+    emoji: "",
     area: "skola",
     items,
     nag: "normal",
     date,
-    editHref: "/school",
+    editHref: "/app/school",
     triggers: [
       { nagKey: `skola-pack-kvall:${dk}`, at: atTime(addDays(date, -1), state.school.packTime), label: "Pack your bag" },
       { nagKey: `skola-pack-morgon:${dk}`, at: atTime(date, state.school.morningTime), label: "Got everything with you?" },
@@ -69,7 +69,7 @@ export function routinesFor(state: AppState, date: Date): ChecklistInstance[] {
       items: r.items,
       nag: r.nag,
       date,
-      editHref: "/routines",
+      editHref: "/app/routines",
       triggers: [{ nagKey: `${r.id}:${dk}`, at: atTime(date, r.time), label: r.name }],
     }))
     .sort((a, b) => a.triggers[0].at.getTime() - b.triggers[0].at.getTime());

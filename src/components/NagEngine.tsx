@@ -13,6 +13,7 @@ import type { AreaId } from "@/lib/types";
 
 interface Toast {
   key: string;
+  mom?: boolean;
   kind: "reminder" | "list";
   refId: string;
   title: string;
@@ -58,8 +59,9 @@ export function NagEngine() {
         fired.push({
           key: `r:${r.id}`,
           kind: "reminder",
+          mom: r.nag === "mamma",
           refId: r.id,
-          title: `${AREAS[r.area].emoji} ${r.title}`,
+          title: r.title,
           body: reminderMessage(r.title, settings.tone, r.nagCount, settings.name),
           area: r.area,
         });
@@ -85,7 +87,7 @@ export function NagEngine() {
             key: `l:${trig.nagKey}`,
             kind: "list",
             refId: trig.nagKey,
-            title: `${list.emoji} ${trig.label}`,
+            title: trig.label,
             body: checklistMessage(
               list.name,
               remaining.map((i) => i.text),
@@ -137,24 +139,26 @@ export function NagEngine() {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed inset-x-0 top-0 z-50 flex flex-col items-center gap-2 p-3 pointer-events-none" aria-live="polite">
+    <div className="pointer-events-none fixed inset-x-0 top-0 z-50 flex flex-col items-center gap-2 p-3 md:items-end md:p-6" aria-live="polite">
       {toasts.slice(-3).map((t) => (
         <div
           key={t.key}
           role="alert"
-          className={`pointer-events-auto w-full max-w-md rounded-3xl border border-white/10 bg-[#0d1022]/90 backdrop-blur-xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.9)] ring-1 ${AREAS[t.area].ring} ${AREAS[t.area].glow} p-4 animate-[slidein_.3s_cubic-bezier(.2,.8,.2,1)]`}
+          className={`pointer-events-auto relative w-full max-w-sm overflow-hidden rounded-md border border-line bg-surface p-4 pl-5 shadow-[0_16px_40px_-20px_rgba(0,0,0,0.35)] animate-[slidein_.35s_cubic-bezier(.16,1,.3,1)]`}
         >
+          <span aria-hidden className={`absolute left-0 top-0 bottom-0 w-1 ${t.mom ? "bg-amber" : "bg-accent"}`} />
+          <p className="eyebrow mb-1">{t.mom ? "Mom Mode" : AREAS[t.area].label}</p>
           <div className="flex items-start gap-3">
             <div className="flex-1 min-w-0">
               <p className="font-semibold">{t.title}</p>
-              <p className="text-sm text-zinc-300 mt-0.5">{t.body}</p>
+              <p className="mt-0.5 text-sm text-ink-2">{t.body}</p>
             </div>
             <button
               onClick={() => dismiss(t.key)}
-              className="text-zinc-500 hover:text-zinc-200 -mt-1 -mr-1 p-1"
+              className="-mt-1 -mr-1 p-1 text-sm text-ink-2 hover:text-ink"
               aria-label="Dismiss"
             >
-              ✕
+              Close
             </button>
           </div>
           <div className="flex gap-2 mt-3">
@@ -166,10 +170,10 @@ export function NagEngine() {
                 }}
                 className="btn-primary flex-1"
               >
-                ✓ Done
+                Done
               </button>
             ) : (
-              <Link href="/#lists" onClick={() => dismiss(t.key)} className="btn-primary flex-1 text-center">
+              <Link href="/app#lists" onClick={() => dismiss(t.key)} className="btn-primary flex-1 text-center">
                 Open list
               </Link>
             )}
@@ -181,7 +185,7 @@ export function NagEngine() {
               }}
               className="btn-secondary"
             >
-              ⏰ 10 min
+              Snooze 10 min
             </button>
           </div>
         </div>

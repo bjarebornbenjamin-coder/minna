@@ -17,7 +17,7 @@ export default function SchoolPage() {
   const [newSubject, setNewSubject] = useState("");
 
   if (!state.settings.areas.includes("skola")) {
-    return <p className="text-zinc-400">Turn on the School area in Settings to use the schedule.</p>;
+    return <p className="text-ink-2">Turn on the School area in Settings to use the schedule.</p>;
   }
 
   // Next school day with classes, for the preview
@@ -41,8 +41,9 @@ export default function SchoolPage() {
 
   return (
     <div>
-      <h1 className="font-display text-3xl font-semibold tracking-tight mb-1">School</h1>
-      <p className="text-sm text-zinc-400 mb-4">
+      <p className="eyebrow">School</p>
+      <h1 className="display mt-3 text-[clamp(3.5rem,10vw,6.5rem)]">Pack once. Think less.</h1>
+      <p className="mt-4 mb-4 max-w-lg text-ink-2">
         Fill in your schedule once. You&apos;ll get a packing list every evening for the next day, plus a check in the morning
         before you leave.
       </p>
@@ -60,14 +61,14 @@ export default function SchoolPage() {
       </div>
 
       <h2 className="section-title">Weekly schedule</h2>
-      <p className="text-xs text-zinc-500 -mt-1 mb-2">Tap to choose which subjects you have each day.</p>
+      <p className="-mt-1 mb-3 text-xs text-ink-2">Tap to choose which subjects you have each day.</p>
       <div className="card overflow-x-auto p-0">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-white/[0.06]">
-              <th className="text-left font-medium text-zinc-400 p-3">Subject</th>
+            <tr className="border-b border-line">
+              <th className="p-3 text-left text-xs font-medium text-ink-2">Subject</th>
               {SCHOOL_DAYS.map((d) => (
-                <th key={d} className="font-medium text-zinc-400 p-2 w-12">
+                <th key={d} className="w-12 p-2 text-xs font-medium text-ink-2">
                   {WEEKDAYS_SHORT[d]}
                 </th>
               ))}
@@ -75,7 +76,7 @@ export default function SchoolPage() {
           </thead>
           <tbody>
             {school.subjects.map((s) => (
-              <tr key={s.id} className="border-b last:border-0 border-white/[0.04]">
+              <tr key={s.id} className="border-b border-line last:border-0">
                 <td className="p-3 font-medium whitespace-nowrap">{s.name}</td>
                 {SCHOOL_DAYS.map((d) => {
                   const on = (school.schedule[d] ?? []).includes(s.id);
@@ -83,15 +84,17 @@ export default function SchoolPage() {
                     <td key={d} className="p-1 text-center">
                       <button
                         onClick={() => toggleDay(d, s.id)}
-                        className={`h-8 w-8 rounded-xl transition ${
-                          on
-                            ? "bg-gradient-to-br from-amber-300 to-amber-500 text-amber-950 shadow-[0_0_16px_-2px_rgba(251,191,36,0.7)]"
-                            : "bg-white/[0.04] text-transparent hover:text-zinc-500 hover:bg-white/[0.08]"
+                        className={`h-8 w-8 rounded-md border transition-colors ${
+                          on ? "border-ink bg-ink" : "border-line bg-surface hover:border-ink/40"
                         }`}
                         aria-label={`${s.name} ${WEEKDAYS_SHORT[d]}`}
                         aria-pressed={on}
                       >
-                        ✓
+                        {on && (
+                          <svg viewBox="0 0 12 12" className="mx-auto h-3 w-3 text-white" aria-hidden>
+                            <path d="M2.5 6.2 5 8.5l4.5-5" fill="none" stroke="currentColor" strokeWidth="1.6" />
+                          </svg>
+                        )}
                       </button>
                     </td>
                   );
@@ -140,21 +143,27 @@ function SubjectEditor({ subject, onChange, onRemove }: { subject: Subject; onCh
     <div className="card py-3">
       <div className="flex items-center gap-2 mb-2">
         <input
-          className="font-medium bg-transparent outline-none flex-1 focus:underline decoration-violet-400"
+          className="flex-1 bg-transparent font-medium outline-none focus:underline decoration-accent"
           value={subject.name}
           onChange={(e) => onChange({ name: e.target.value })}
           aria-label="Subject name"
         />
-        <button className="btn-ghost text-xs !text-rose-300" onClick={onRemove}>
+        <button className="btn-ghost text-xs" onClick={onRemove}>
           Remove
         </button>
       </div>
       <div className="flex flex-wrap gap-1.5 items-center">
         {subject.items.map((it) => (
-          <span key={it} className="chip bg-amber-400/10 text-amber-200 ring-1 ring-amber-400/20">
+          <span key={it} className="inline-flex items-center gap-1.5 rounded-md bg-bg-2 px-2 py-1 text-xs">
             {it}
-            <button onClick={() => onChange({ items: subject.items.filter((x) => x !== it) })} aria-label={`Remove ${it}`}>
-              ✕
+            <button
+              onClick={() => onChange({ items: subject.items.filter((x) => x !== it) })}
+              aria-label={`Remove ${it}`}
+              className="text-ink-2 hover:text-ink"
+            >
+              <svg viewBox="0 0 10 10" className="h-2.5 w-2.5" aria-hidden>
+                <path d="M2 2l6 6M8 2 2 8" stroke="currentColor" strokeWidth="1.4" />
+              </svg>
             </button>
           </span>
         ))}
@@ -167,8 +176,9 @@ function SubjectEditor({ subject, onChange, onRemove }: { subject: Subject; onCh
           }}
         >
           <input
-            className="text-xs bg-transparent outline-none border-b border-dashed border-white/20 w-32 py-0.5 placeholder:text-zinc-500"
-            placeholder="+ add item to bring"
+            className="w-36 border-b border-dashed border-line bg-transparent py-0.5 text-xs outline-none placeholder:text-ink-2/70 focus:border-ink"
+            placeholder="Add item to bring"
+            aria-label={`Add item for ${subject.name}`}
             value={item}
             onChange={(e) => setItem(e.target.value)}
           />

@@ -60,6 +60,15 @@ export interface SchoolSettings {
   morningTime: string;
 }
 
+/** Something Minna remembers about the user, only stored when memory is turned on */
+export interface Memory {
+  id: string;
+  text: string;
+  source: "user" | "assistant";
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export interface Settings {
   name: string;
   tone: Tone;
@@ -69,6 +78,8 @@ export interface Settings {
   onboarded: boolean;
   /** Access code for the chat if the server requires one */
   accessCode?: string;
+  /** Long-term memory is opt-in */
+  memoryEnabled?: boolean;
 }
 
 export interface AppState {
@@ -81,4 +92,5 @@ export interface AppState {
   checks: Record<string, string[]>;
   /** key: `${listId}:${YYYY-MM-DD}` -> nag count for checklists */
   listNags: Record<string, { count: number; last?: string; snoozedUntil?: string }>;
+  memories: Memory[];
 }

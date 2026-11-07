@@ -1,36 +1,35 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Anton, Geist } from "next/font/google";
 import "./globals.css";
-import { AppShell } from "@/components/AppShell";
-import { StoreProvider } from "@/lib/store";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
-const grotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-grotesk", display: "swap" });
+const anton = Anton({ subsets: ["latin"], weight: "400", variable: "--font-anton", display: "swap" });
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Minna",
-  description: "Your personal AI assistant that remembers for you, at home, at work and at school.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+  title: "Minna — your personal assistant",
+  description: "Minna keeps track of your plans, deadlines and the small things, and reminds you until they're done.",
   manifest: "/manifest.webmanifest",
   icons: { icon: "/icon.svg", apple: "/icon.svg" },
-  appleWebApp: { capable: true, title: "Minna", statusBarStyle: "black-translucent" },
+  appleWebApp: { capable: true, title: "Minna", statusBarStyle: "default" },
+  openGraph: {
+    title: "Minna",
+    description: "Your life. More organized. Less overwhelming.",
+    images: ["/assets/minna-editorial/minna-organize.png"],
+  },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#05060f",
-  colorScheme: "dark",
+  themeColor: "#f5f4f0",
+  colorScheme: "light",
   width: "device-width",
   initialScale: 1,
-  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${grotesk.variable}`}>
-      <body className="antialiased">
-        <StoreProvider>
-          <AppShell>{children}</AppShell>
-        </StoreProvider>
-      </body>
+    <html lang="en" className={`${anton.variable} ${geist.variable}`}>
+      <body>{children}</body>
     </html>
   );
 }

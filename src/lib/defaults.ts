@@ -18,7 +18,7 @@ export function defaultRoutines(areas: AreaId[]): Routine[] {
     {
       id: uid(),
       name: "Before you leave home",
-      emoji: "🚪",
+      emoji: "",
       area: "privat",
       time: "07:15",
       days: [1, 2, 3, 4, 5],
@@ -30,7 +30,7 @@ export function defaultRoutines(areas: AreaId[]): Routine[] {
     r.push({
       id: uid(),
       name: "Plan your workday",
-      emoji: "🗂️",
+      emoji: "",
       area: "jobb",
       time: "08:30",
       days: [1, 2, 3, 4, 5],
@@ -42,7 +42,7 @@ export function defaultRoutines(areas: AreaId[]): Routine[] {
     r.push({
       id: uid(),
       name: "Wrap up the work week",
-      emoji: "✅",
+      emoji: "",
       area: "jobb",
       time: "15:30",
       days: [5],
@@ -57,7 +57,7 @@ export function defaultRoutines(areas: AreaId[]): Routine[] {
     r.push({
       id: uid(),
       name: "Evening wind-down",
-      emoji: "🌙",
+      emoji: "",
       area: "privat",
       time: "21:30",
       days: [0, 1, 2, 3, 4, 5, 6],
@@ -98,5 +98,6 @@ export function initialState(): AppState {
     },
     checks: {},
     listNags: {},
+    memories: [],
   };
 }

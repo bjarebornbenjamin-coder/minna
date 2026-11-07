@@ -9,10 +9,10 @@ type Store = ReturnType<typeof useStore>;
 
 /** What the user sees in the chat for each thing the assistant did */
 export interface ChatAction {
-  icon: string;
+  label: string;
   text: string;
   /** If it can be undone: what to remove */
-  undo?: { kind: "reminder" | "routine"; id: string };
+  undo?: { kind: "reminder" | "routine" | "memory"; id: string };
   undone?: boolean;
   error?: boolean;
 }
@@ -88,7 +88,7 @@ export function executeTool(name: string, rawInput: unknown, store: Store): Tool
         });
         return {
           content: `Created reminder ${id}: "${title}" ${formatDue(due)}`,
-          action: { icon: AREAS[a].emoji, text: `${title} · ${formatDue(due)}`, undo: { kind: "reminder", id } },
+          action: { label: "Added", text: `${title} · ${formatDue(due)}`, undo: { kind: "reminder", id } },
         };
       }
 
@@ -111,7 +111,7 @@ export function executeTool(name: string, rawInput: unknown, store: Store): Tool
         const due = patch.due ?? existing.due;
         return {
           content: `Updated ${id}: "${title}" ${formatDue(due)}`,
-          action: { icon: "✏️", text: `Changed: ${title} · ${formatDue(due)}` },
+          action: { label: "Changed", text: `${title} · ${formatDue(due)}` },
         };
       }
 
@@ -123,7 +123,7 @@ export function executeTool(name: string, rawInput: unknown, store: Store): Tool
         store.completeReminder(id);
         return {
           content: r.repeat === "ingen" ? `Marked "${r.title}" as done` : `"${r.title}" done, moved to its next time`,
-          action: { icon: "✅", text: `Done: ${r.title}` },
+          action: { label: "Done", text: r.title },
         };
       }
 
@@ -132,7 +132,7 @@ export function executeTool(name: string, rawInput: unknown, store: Store): Tool
         const r = store.getState().reminders.find((x) => x.id === id);
         if (!r) throw new InputError(`No reminder with id ${id}`);
         store.deleteReminder(id);
-        return { content: `Deleted "${r.title}"`, action: { icon: "🗑️", text: `Deleted: ${r.title}` } };
+        return { content: `Deleted "${r.title}"`, action: { label: "Deleted", text: r.title } };
       }
 
       case "create_routine": {
@@ -150,7 +150,7 @@ export function executeTool(name: string, rawInput: unknown, store: Store): Tool
         store.saveRoutine({
           id,
           name: nameStr,
-          emoji: str(input, "emoji") || "✅",
+          emoji: "",
           area: area(store, str(input, "area")),
           time: t,
           days: [...new Set(days as number[])],
@@ -164,11 +164,7 @@ export function executeTool(name: string, rawInput: unknown, store: Store): Tool
           .join(", ");
         return {
           content: `Created routine ${id}: "${nameStr}" ${dayText} at ${t} with ${items.length} items`,
-          action: {
-            icon: str(input, "emoji") || "📋",
-            text: `Routine: ${nameStr} · ${dayText} ${formatClock(t)}`,
-            undo: { kind: "routine", id },
-          },
+          action: { label: "Routine", text: `${nameStr} · ${dayText} ${formatClock(t)}`, undo: { kind: "routine", id } },
         };
       }
 
@@ -180,8 +176,25 @@ export function executeTool(name: string, rawInput: unknown, store: Store): Tool
         store.saveRoutine({ ...r, items: [...r.items, ...items.map((text) => ({ id: uid(), text }))] });
         return {
           content: `Added ${items.length} items to "${r.name}"`,
-          action: { icon: r.emoji, text: `${r.name}: + ${items.join(", ")}` },
+          action: { label: "Updated", text: `${r.name}: ${items.join(", ")}` },
         };
+      }
+
+      case "remember": {
+        const text = str(input, "text", true)!;
+        if (!store.getState().settings.memoryEnabled) {
+          throw new InputError("Memory is turned off. The user can turn it on under Memory.");
+        }
+        const id = store.addMemory(text, "assistant");
+        return { content: `Saved memory ${id}: ${text}`, action: { label: "Remembered", text, undo: { kind: "memory", id } } };
+      }
+
+      case "forget": {
+        const id = str(input, "id", true)!;
+        const m = store.getState().memories.find((x) => x.id === id);
+        if (!m) throw new InputError(`No memory with id ${id}`);
+        store.deleteMemory(id);
+        return { content: `Forgot: ${m.text}`, action: { label: "Forgot", text: m.text } };
       }
 
       case "set_subject_items": {
@@ -198,7 +211,7 @@ export function executeTool(name: string, rawInput: unknown, store: Store): Tool
         }
         return {
           content: `${subject}: ${items.join(", ")}${existing ? "" : " (new subject, not on the schedule yet)"}`,
-          action: { icon: "🎒", text: `${subject}: ${items.join(", ")}` },
+          action: { label: "School", text: `${subject}: ${items.join(", ")}` },
         };
       }
 
@@ -207,6 +220,6 @@ export function executeTool(name: string, rawInput: unknown, store: Store): Tool
     }
   } catch (e) {
     const message = e instanceof InputError ? e.message : "Unexpected error";
-    return { content: message, isError: true, action: { icon: "⚠️", text: message, error: true } };
+    return { content: message, isError: true, action: { label: "Couldn't do", text: message, error: true } };
   }
 }

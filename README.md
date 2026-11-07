@@ -1,6 +1,6 @@
 # Minna
 
-> Engelsk app med mörk, futuristisk design och en interaktiv 3D-kärna (Three.js / React Three Fiber).
+> Engelsk app med ljus, redaktionell design. Presentationssida på `/`, själva appen på `/app`.
 
 En personlig assistent som kommer ihåg åt dig, och tjatar tills det är gjort. Den kan användas privat, på jobbet och i skolan.
 
@@ -44,9 +44,12 @@ All data sparas lokalt i webbläsaren (localStorage).
 
 ```
 src/
-  app/            sidor: Today (/), /chat, /tasks, /routines, /school, /settings
+  app/page.tsx    presentationssidan (/)
+  app/app/        appen: /app (Today), /app/chat, /app/tasks, /app/mom-mode,
+                  /app/routines, /app/school, /app/memory, /app/settings, /app/more
   components/     UI-komponenter + NagEngine (tjat-motorn)
-  components/core 3D-kärnan (MinnaCore) med reservbild om WebGL saknas
+  components/Core.tsx  Minna Core (produktbild + diskreta tillstånd i CSS)
+  components/site/     presentationssidans komponenter
   lib/
     types.ts      datamodell
     store.tsx     tillstånd + lagring
@@ -61,3 +64,13 @@ src/
 5. Jobbfunktioner: mötesförberedelser, uppföljningar, veckorapport.
 6. Konto och synk (Supabase) och push-notiser när appen är stängd.
 7. Mobilapp med Expo.
+
+## Bilder
+
+Higgsfield-bilderna ligger i `public/assets/minna-editorial/`:
+
+- `minna-organize.png`, `minna-workflow.png`, `minna-mom-mode.png`: de levererade bilderna
+- `minna-core-product.png`: kärnan utklippt (rund mask) ur `minna-organize.png`
+
+Saknas fortfarande: `minna-hero-editorial.png`, `minna-hero-mobile.png`, `minna-memory.png`,
+`minna-onboarding.png`, `minna-social-og.png`. Sidan använder kärnan eller ren typografi i stället.

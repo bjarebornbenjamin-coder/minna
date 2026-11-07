@@ -87,7 +87,6 @@ export const ASSISTANT_TOOLS: ToolDef[] = [
       type: "object",
       properties: {
         name: { type: "string" },
-        emoji: { type: "string", description: "A fitting emoji" },
         area: AREA,
         time: { type: "string", description: "Time HH:mm (24-hour) when the list should remind" },
         days: {
@@ -116,6 +115,27 @@ export const ASSISTANT_TOOLS: ToolDef[] = [
     },
   },
   {
+    name: "remember",
+    description:
+      "Saves a lasting fact or preference about the user to long-term memory, e.g. 'Studies math on Mondays' or 'Prefers reminders in the evening'. Only when memory is on, and only for things the user has clearly stated and would want remembered. Never store sensitive traits (health, religion, sexuality, politics, ethnicity) or one-off tasks (use reminders for those).",
+    parameters: {
+      type: "object",
+      properties: { text: { type: "string", description: "Short, factual sentence in third person" } },
+      required: ["text"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "forget",
+    description: "Removes a memory by id when the user asks Minna to forget something or a memory is no longer true.",
+    parameters: {
+      type: "object",
+      properties: { id: { type: "string", description: "The memory's id from the context" } },
+      required: ["id"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "set_subject_items",
     description:
       "School schedule: sets what to bring for a subject (replaces the list). Creates the subject if it doesn't exist. Used for the packing list the evening before.",
@@ -135,7 +155,7 @@ export const SYSTEM_PROMPT = `You are Minna, a personal assistant inside an app 
 
 How you work:
 - When the user mentions something to remember, a deadline, an exam, a meeting or something to bring: create reminders right away with the tools. Only ask if something is so unclear that you can't pick a reasonable time.
-- Pick sensible times yourself: date only → 8:00 AM that day (7:00 AM for things to bring to school or work). "Tonight" → 7:00 PM. "After school/work" → 4:00 PM and 5:30 PM respectively.
+- Pick sensible times yourself: date only: 8:00 AM that day (7:00 AM for things to bring to school or work). "Tonight": 7:00 PM. "After school/work": 4:00 PM and 5:30 PM respectively.
 - Deadlines and exams: create one reminder for the event itself and one or more preparatory ones (e.g. study the day before, start the assignment a few days earlier).
 - Things to bring: set the reminder the evening before (around 8:00 PM) with nag level mom.
 - Choose the area (personal/work/school) from context, among the user's active areas.
@@ -144,8 +164,10 @@ How you work:
 - Change, complete or delete existing items using their id from the context. Only delete when the user asks.
 - Never claim to have done something you didn't do with a tool.
 - Calendar and email aren't connected yet. If the user asks for that, say it's coming soon and offer a reminder instead.
+- Memory: if memory is on, you may save lasting preferences the user states (e.g. preferred study days) with remember, and use what's in memory to make better suggestions. Tell the user briefly when you save something. If memory is off, don't try to save anything; you can mention they can turn it on under Memory.
 
 Style:
-- Reply in English, short and conversational, like a caring assistant. Follow the user's chosen tone.
+- Reply in English, short and conversational, like a capable, caring assistant. Follow the user's chosen tone.
+- No emojis. No exclamation-mark enthusiasm. Plain, specific language.
 - After using tools: briefly confirm what you added, with day and time, without repeating every detail. The app already shows a list of what you did.
 - Write plain text without markdown headings. Short bullet lists with "- " are fine.`;

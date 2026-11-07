@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { Core, type CoreState } from "@/components/Core";
 import type { AssistantMessage, ChatMessage, ToolResultMessage, TurnResult } from "@/lib/assistant/chat-types";
-import { CoreView, type CoreState } from "@/components/core/CoreView";
 import { buildContext } from "@/lib/assistant/context";
 import { executeTool, type ChatAction } from "@/lib/assistant/execute";
 import { useStore } from "@/lib/store";
@@ -19,7 +20,15 @@ const MAX_STEPS = 8;
 function loadChat(): ChatState {
   try {
     const raw = localStorage.getItem(CHAT_KEY);
-    if (raw) return JSON.parse(raw) as ChatState;
+    if (raw) {
+      const parsed = JSON.parse(raw) as ChatState;
+      // Older saved actions used an "icon" field
+      for (const a of Object.values(parsed.actions ?? {})) {
+        const legacy = a as ChatAction & { icon?: string };
+        if (!legacy.label) legacy.label = legacy.error ? "Couldn't do" : "Done";
+      }
+      return parsed;
+    }
   } catch {
     // ignore
   }
@@ -40,7 +49,7 @@ const SUGGESTIONS: Record<string, string[]> = {
   privat: ["Call the dentist tomorrow morning", "Make a gym packing list for Mondays and Thursdays"],
 };
 
-/* ---------- Voice input (Web Speech API) ---------- */
+/* Voice input (Web Speech API) */
 interface SpeechRec {
   lang: string;
   interimResults: boolean;
@@ -71,14 +80,15 @@ export default function ChatPage() {
   const [speechOk, setSpeechOk] = useState(false);
   const [phase, setPhase] = useState<CoreState>("idle");
   const phaseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const recRef = useRef<SpeechRec | null>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
   const flash = (p: CoreState, ms = 1600) => {
     if (phaseTimer.current) clearTimeout(phaseTimer.current);
     setPhase(p);
     phaseTimer.current = setTimeout(() => setPhase("idle"), ms);
   };
-  const recRef = useRef<SpeechRec | null>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     setChat(loadChat());
@@ -105,23 +115,16 @@ export default function ChatPage() {
     setPhase("thinking");
     let didSomething = false;
 
-    let state: ChatState = {
-      messages: [...chat.messages, { role: "user", text: trimmed }],
-      actions: { ...chat.actions },
-    };
+    let state: ChatState = { messages: [...chat.messages, { role: "user", text: trimmed }], actions: { ...chat.actions } };
     update(state);
     const startLength = chat.messages.length;
 
     try {
       for (let step = 0; step < MAX_STEPS; step++) {
+        const code = storeRef.current.getState().settings.accessCode;
         const res = await fetch("/api/chat", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(storeRef.current.getState().settings.accessCode && {
-              "x-minna-code": storeRef.current.getState().settings.accessCode,
-            }),
-          },
+          headers: { "Content-Type": "application/json", ...(code && { "x-minna-code": code }) },
           body: JSON.stringify({ messages: state.messages, context: buildContext(storeRef.current.getState()) }),
         });
         const data = await res.json().catch(() => ({}));
@@ -168,7 +171,7 @@ export default function ChatPage() {
         setPhase("thinking");
       }
     } catch {
-      setError({ message: "Couldn't reach the server. Are you online?" });
+      setError({ message: "Couldn't reach the server. Check your connection and try again." });
       flash("error", 2500);
     } finally {
       setBusy(false);
@@ -180,7 +183,8 @@ export default function ChatPage() {
     const action = chat.actions[toolUseId];
     if (!action?.undo || action.undone) return;
     if (action.undo.kind === "reminder") store.deleteReminder(action.undo.id);
-    else store.deleteRoutine(action.undo.id);
+    else if (action.undo.kind === "routine") store.deleteRoutine(action.undo.id);
+    else store.deleteMemory(action.undo.id);
     update({ ...chat, actions: { ...chat.actions, [toolUseId]: { ...action, undone: true } } });
   };
 
@@ -201,14 +205,12 @@ export default function ChatPage() {
       for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
       setInput(base + t);
     };
-    rec.onend = () => {
+    const stop = () => {
       setListening(false);
       setPhase((p) => (p === "listening" ? "idle" : p));
     };
-    rec.onerror = () => {
-      setListening(false);
-      setPhase((p) => (p === "listening" ? "idle" : p));
-    };
+    rec.onend = stop;
+    rec.onerror = stop;
     recRef.current = rec;
     setListening(true);
     setPhase("listening");
@@ -220,42 +222,63 @@ export default function ChatPage() {
   const areas = store.state.settings.areas;
   const suggestions = areas.flatMap((a) => SUGGESTIONS[a] ?? []).slice(0, 4);
   const name = store.state.settings.name;
+  const empty = chat.messages.length === 0;
 
   return (
-    <div className="flex flex-col min-h-[calc(100dvh-8rem)] md:min-h-[calc(100dvh-4rem)]">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="font-display text-3xl font-semibold tracking-tight">Chat</h1>
-        {chat.messages.length > 0 && (
-          <button
-            className="btn-ghost"
-            disabled={busy}
-            onClick={() => {
-              if (confirm("Start a new chat? Your reminders stay.")) update({ messages: [], actions: {} });
-            }}
-          >
-            New chat
-          </button>
-        )}
+    <div className="flex min-h-[calc(100dvh-11rem)] flex-col md:min-h-[calc(100dvh-7rem)]">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="eyebrow">Chat</p>
+          {!empty && <h1 className="display mt-2 text-5xl">Minna</h1>}
+        </div>
+        <div className="flex items-center gap-4">
+          {!empty && (
+            <button
+              className="btn-ghost"
+              disabled={busy}
+              onClick={() => {
+                if (confirm("Start a new chat? Your reminders stay.")) update({ messages: [], actions: {} });
+              }}
+            >
+              New chat
+            </button>
+          )}
+          {!empty && <Core size={64} state={phase} float={false} shadow={false} />}
+        </div>
       </div>
 
-      <div className="flex justify-center -mt-4 -mb-2">
-        <CoreView size={chat.messages.length === 0 ? 220 : 130} state={phase} className="transition-all duration-500" />
-      </div>
-
-      <div className="flex-1 flex flex-col gap-3">
-        {chat.messages.length === 0 && (
-          <div className="text-center py-2 animate-fadeup">
-            <p className="font-display text-2xl font-semibold">{name ? `Hi ${name}. ` : "Hi. "}What should I keep track of?</p>
-            <p className="text-sm text-zinc-400 mt-2 max-w-sm mx-auto">
-              Write like you would to a person. I&apos;ll add reminders and checklists for you. You can list several things
-              at once.
-            </p>
-            <div className="flex flex-col gap-2 mt-6 max-w-sm mx-auto">
-              {suggestions.map((s) => (
-                <button key={s} className="card py-2.5 text-sm text-left text-zinc-200 hover:!border-violet-400/30" onClick={() => send(s)}>
-                  {s}
-                </button>
-              ))}
+      <div className="flex flex-1 flex-col gap-5 pt-6">
+        {empty && (
+          <div className="grid items-center gap-8 py-4 sm:grid-cols-[1fr_auto]">
+            <div className="animate-rise">
+              <h1 className="display text-[clamp(3.25rem,9vw,6rem)]">
+                {name ? `Hi, ${name}.` : "Hi."}
+                <br />
+                What&apos;s coming up?
+              </h1>
+              <p className="mt-4 max-w-md text-ink-2">
+                Write like you would to a person. Minna adds the reminders and checklists for you, and you can list several
+                things at once.
+              </p>
+            </div>
+            <Core size={180} state={phase} className="mx-auto" />
+            <div className="sm:col-span-2">
+              <p className="eyebrow mb-2">Try</p>
+              <ul className="border-t border-line">
+                {suggestions.map((s) => (
+                  <li key={s}>
+                    <button
+                      className="group flex w-full items-center justify-between border-b border-line py-3 text-left transition-colors hover:text-accent"
+                      onClick={() => send(s)}
+                    >
+                      <span>{s}</span>
+                      <span className="text-ink-2 transition-transform group-hover:translate-x-1 group-hover:text-accent" aria-hidden>
+                        →
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         )}
@@ -265,29 +288,37 @@ export default function ChatPage() {
         ))}
 
         {busy && (
-          <div className="flex items-center gap-2 text-sm text-zinc-400 px-1">
-            <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 animate-ping" />
-            {phase === "executing" ? "Working on it…" : "Thinking…"}
-          </div>
+          <p className="text-sm text-ink-2" role="status">
+            {phase === "executing" ? "Updating your plans" : "Thinking"}
+            <span className="inline-block w-6 animate-pulse">…</span>
+          </p>
         )}
 
         {error && (
-          <div className="card !border-rose-400/30 !bg-rose-500/[0.07] text-sm">
-            <p className="font-medium text-rose-200">{error.message}</p>
+          <div className="border-l-2 border-[#b42318] bg-surface px-4 py-3 text-sm" role="alert">
+            <p className="font-medium">{error.message}</p>
             {error.code === "missing_key" && (
-              <p className="text-zinc-400 mt-1">
-                Add your OpenAI key as the environment variable OPENAI_API_KEY (in Vercel: Settings → Environment Variables)
-                and redeploy.
+              <p className="mt-1 text-ink-2">
+                Add your OpenAI key as the environment variable OPENAI_API_KEY (Vercel: Settings, then Environment Variables) and
+                redeploy.
               </p>
             )}
-            {error.code === "forbidden" && <p className="text-zinc-400 mt-1">Enter the access code under Settings → Chat.</p>}
+            {error.code === "forbidden" && (
+              <p className="mt-1 text-ink-2">
+                Enter the access code in{" "}
+                <Link href="/app/settings" className="link">
+                  Settings
+                </Link>
+                .
+              </p>
+            )}
           </div>
         )}
         <div ref={bottomRef} />
       </div>
 
       <form
-        className="sticky bottom-24 md:bottom-4 mt-4 flex items-end gap-2 rounded-3xl border border-white/10 bg-[#0d1022]/85 backdrop-blur-xl p-2 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.9)] focus-within:border-violet-400/40 focus-within:shadow-[0_0_40px_-12px_rgba(139,92,246,0.8)] transition"
+        className="sticky bottom-20 mt-6 flex items-end gap-2 rounded-md border border-line bg-surface p-2 transition-colors focus-within:border-ink md:bottom-6"
         onSubmit={(e) => {
           e.preventDefault();
           send(input);
@@ -295,9 +326,9 @@ export default function ChatPage() {
       >
         <textarea
           ref={inputRef}
-          className="flex-1 resize-none bg-transparent outline-none px-2 py-2 text-base sm:text-sm max-h-40 placeholder:text-zinc-500"
+          className="max-h-40 flex-1 resize-none bg-transparent px-2 py-2 text-base outline-none focus-visible:outline-none placeholder:text-ink-2/70 sm:text-sm"
           rows={1}
-          placeholder={listening ? "Listening…" : "Message Minna…"}
+          placeholder={listening ? "Listening" : "Message Minna"}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
@@ -312,12 +343,12 @@ export default function ChatPage() {
           <button
             type="button"
             onClick={toggleMic}
-            className={`h-10 w-10 shrink-0 rounded-xl grid place-items-center transition ${
-              listening ? "bg-rose-500/80 text-white animate-pulse" : "bg-white/[0.06] hover:bg-white/[0.1]"
+            className={`h-10 shrink-0 rounded-md px-3 text-sm transition-colors ${
+              listening ? "bg-ink text-white" : "text-ink-2 hover:bg-bg hover:text-ink"
             }`}
-            aria-label={listening ? "Stop listening" : "Speak"}
+            aria-pressed={listening}
           >
-            🎤
+            {listening ? "Stop" : "Speak"}
           </button>
         )}
         <button className="btn-primary h-10 shrink-0" disabled={busy || !input.trim()}>
@@ -328,20 +359,10 @@ export default function ChatPage() {
   );
 }
 
-function MessageView({
-  msg,
-  actions,
-  onUndo,
-}: {
-  msg: ChatMessage;
-  actions: Record<string, ChatAction>;
-  onUndo: (id: string) => void;
-}) {
+function MessageView({ msg, actions, onUndo }: { msg: ChatMessage; actions: Record<string, ChatAction>; onUndo: (id: string) => void }) {
   if (msg.role === "user") {
     return (
-      <div className="self-end max-w-[85%] rounded-3xl rounded-br-lg bg-gradient-to-br from-violet-600 to-indigo-600 text-white px-4 py-2.5 whitespace-pre-wrap shadow-[0_8px_30px_-10px_rgba(124,58,237,0.8)] animate-fadeup">
-        {msg.text}
-      </div>
+      <div className="max-w-[85%] self-end whitespace-pre-wrap rounded-md bg-ink px-4 py-2.5 text-white animate-fade">{msg.text}</div>
     );
   }
   if (msg.role === "tool") return null; // results are shown as actions under the assistant's reply
@@ -350,30 +371,19 @@ function MessageView({
   const text = m.text.trim();
 
   return (
-    <div className="self-start max-w-[90%] flex flex-col gap-2 animate-fadeup">
-      {text && (
-        <div className="rounded-3xl rounded-bl-lg border border-white/10 bg-white/[0.05] backdrop-blur-xl px-4 py-2.5 whitespace-pre-wrap text-zinc-100">
-          {text.replace(/\*\*(.+?)\*\*/g, "$1")}
-        </div>
-      )}
+    <div className="flex max-w-[92%] flex-col gap-2 self-start animate-fade">
+      {text && <div className="whitespace-pre-wrap leading-relaxed">{text.replace(/\*\*(.+?)\*\*/g, "$1")}</div>}
       {m.toolCalls.length > 0 && (
-        <ul className="flex flex-col gap-1.5">
+        <ul className="border-l border-line pl-4">
           {m.toolCalls.map((t) => {
             const a = actions[t.id];
             if (!a) return null;
             return (
-              <li
-                key={t.id}
-                className={`flex items-center gap-2 rounded-2xl border px-3 py-2 text-sm ${
-                  a.error
-                    ? "border-amber-400/30 bg-amber-400/[0.07] text-amber-100"
-                    : a.undone
-                      ? "border-white/10 opacity-40 line-through"
-                      : "border-cyan-300/20 bg-cyan-300/[0.06] text-cyan-50 shadow-[0_0_24px_-12px_rgba(34,211,238,0.9)]"
-                }`}
-              >
-                <span>{a.icon}</span>
-                <span className="flex-1 min-w-0">{a.text}</span>
+              <li key={t.id} className={`flex items-baseline gap-3 py-1 text-sm ${a.undone ? "line-through opacity-40" : ""}`}>
+                <span className={`w-24 shrink-0 text-xs font-medium uppercase tracking-wide ${a.error ? "text-[#b42318]" : "text-accent"}`}>
+                  {a.undone ? "Undone" : a.label}
+                </span>
+                <span className="min-w-0 flex-1">{a.text}</span>
                 {a.undo && !a.undone && (
                   <button className="btn-ghost text-xs" onClick={() => onUndo(t.id)}>
                     Undo

@@ -76,6 +76,15 @@ export function buildContext(state: AppState, now: Date = new Date()): string {
     );
   }
 
+  lines.push("");
+  if (settings.memoryEnabled) {
+    lines.push(`# Memory (on, ${state.memories.length} items)`);
+    if (state.memories.length === 0) lines.push("(nothing yet)");
+    for (const m of state.memories) lines.push(`- [${m.id}] ${m.text}`);
+  } else {
+    lines.push("# Memory: off (do not save anything)");
+  }
+
   if (settings.areas.includes("skola")) {
     const { school } = state;
     lines.push("");

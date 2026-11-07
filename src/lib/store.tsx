@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { addDays } from "./dates";
 import { initialState, uid } from "./defaults";
-import type { AppState, Reminder, Routine, SchoolSettings, Settings } from "./types";
+import type { AppState, Memory, Reminder, Routine, SchoolSettings, Settings } from "./types";
 
 const STORAGE_KEY = "minna:v1";
 
@@ -13,7 +13,12 @@ function load(): AppState {
     if (raw) {
       const parsed = JSON.parse(raw) as AppState;
       const base = initialState();
-      return { ...base, ...parsed, settings: { ...base.settings, ...parsed.settings } };
+      return {
+        ...base,
+        ...parsed,
+        settings: { ...base.settings, ...parsed.settings },
+        memories: Array.isArray(parsed.memories) ? parsed.memories : [],
+      };
     }
   } catch {
     // broken or blocked storage, start over
@@ -65,6 +70,10 @@ interface Store {
   markListNotified: (nagKey: string) => void;
   snoozeList: (nagKey: string, minutes: number) => void;
   replaceState: (s: AppState) => void;
+  addMemory: (text: string, source: Memory["source"]) => string;
+  updateMemory: (id: string, text: string) => void;
+  deleteMemory: (id: string) => void;
+  clearMemories: () => void;
   /** Latest state right away, without waiting for a re-render */
   getState: () => AppState;
 }
@@ -195,6 +204,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           },
         })),
       replaceState: (s) => apply(() => s),
+      addMemory: (text, source) => {
+        const id = uid();
+        apply((s) => ({ ...s, memories: [...s.memories, { id, text, source, createdAt: new Date().toISOString() }] }));
+        return id;
+      },
+      updateMemory: (id, text) =>
+        apply((s) => ({
+          ...s,
+          memories: s.memories.map((m) => (m.id === id ? { ...m, text, updatedAt: new Date().toISOString() } : m)),
+        })),
+      deleteMemory: (id) => apply((s) => ({ ...s, memories: s.memories.filter((m) => m.id !== id) })),
+      clearMemories: () => apply((s) => ({ ...s, memories: [] })),
       getState: () => stateRef.current,
     }),
     [state, ready, mapReminder, apply],

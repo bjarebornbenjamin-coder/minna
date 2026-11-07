@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { AREA_IDS, AREAS, TONES } from "@/lib/areas";
 import { WEEKDAYS_SHORT } from "@/lib/dates";
@@ -15,26 +16,11 @@ export default function SettingsPage() {
   const { state, updateSettings, replaceState, saveRoutine } = useStore();
   const { settings } = state;
   const [perm, setPerm] = useState<string>("…");
-  const [effects3d, setEffects3d] = useState(true);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setPerm(notificationsSupported() ? Notification.permission : "unsupported");
-    try {
-      setEffects3d(localStorage.getItem("minna:3d") !== "off");
-    } catch {
-      // storage blocked
-    }
   }, []);
-
-  const toggle3d = (on: boolean) => {
-    setEffects3d(on);
-    try {
-      localStorage.setItem("minna:3d", on ? "on" : "off");
-    } catch {
-      // storage blocked
-    }
-  };
 
   const toggleArea = (a: (typeof AREA_IDS)[number]) => {
     const has = settings.areas.includes(a);
@@ -69,17 +55,18 @@ export default function SettingsPage() {
 
   const toggleRow = (checked: boolean, onChange: (v: boolean) => void, title: string, desc: string) => (
     <label className="flex items-start gap-3 cursor-pointer">
-      <input type="checkbox" className="h-5 w-5 mt-0.5 accent-violet-500" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[#264eff]" checked={checked} onChange={(e) => onChange(e.target.checked)} />
       <span>
-        <span className="block font-medium text-sm">{title}</span>
-        <span className="block text-xs text-zinc-500">{desc}</span>
+        <span className="block text-sm font-medium">{title}</span>
+        <span className="block text-xs text-ink-2">{desc}</span>
       </span>
     </label>
   );
 
   return (
     <div>
-      <h1 className="font-display text-3xl font-semibold tracking-tight mb-4">Settings</h1>
+      <p className="eyebrow">Settings</p>
+      <h1 className="display mt-3 mb-2 text-[clamp(3.5rem,10vw,6.5rem)]">Your way.</h1>
 
       <h2 className="section-title">About you</h2>
       <div className="card flex flex-col gap-4">
@@ -98,7 +85,7 @@ export default function SettingsPage() {
               </button>
             ))}
           </div>
-          <p className="text-xs text-zinc-500 mt-2">Example: “{reminderMessage("Pack your gym bag", settings.tone, 0, settings.name)}”</p>
+          <p className="mt-2 text-xs text-ink-2">Example: “{reminderMessage("Pack your gym bag", settings.tone, 0, settings.name)}”</p>
         </div>
       </div>
 
@@ -106,8 +93,7 @@ export default function SettingsPage() {
       <div className="card flex flex-col gap-2">
         {AREA_IDS.map((a) => (
           <label key={a} className="flex items-center gap-3 cursor-pointer py-1">
-            <input type="checkbox" className="h-5 w-5 accent-violet-500" checked={settings.areas.includes(a)} onChange={() => toggleArea(a)} />
-            <span className="text-xl">{AREAS[a].emoji}</span>
+            <input type="checkbox" className="h-4 w-4 accent-[#264eff]" checked={settings.areas.includes(a)} onChange={() => toggleArea(a)} />
             <span className="font-medium">{AREAS[a].label}</span>
           </label>
         ))}
@@ -143,7 +129,7 @@ export default function SettingsPage() {
                 return (
                   <button
                     key={d}
-                    className={`seg flex-1 px-0 text-xs ${on ? "seg-on" : ""}`}
+                    className={`seg flex-1 !px-0 !text-xs ${on ? "seg-on" : ""}`}
                     onClick={() =>
                       updateSettings({
                         workHours: {
@@ -182,20 +168,21 @@ export default function SettingsPage() {
           onChange={(e) => updateSettings({ accessCode: e.target.value })}
           autoComplete="off"
         />
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-ink-2">
           If MINNA_ACCESS_CODE is set on the server, enter the same code here. It stops others from using your chat (and your
           API key).
         </p>
       </div>
 
-      <h2 className="section-title">Appearance</h2>
-      <div className="card">
-        {toggleRow(
-          effects3d,
-          toggle3d,
-          "3D effects",
-          "The interactive 3D core. Turn off to save battery; a still image is shown instead. Also off automatically if your device prefers reduced motion.",
-        )}
+      <h2 className="section-title">Memory</h2>
+      <div className="card flex items-center justify-between gap-4">
+        <p className="text-sm">
+          {settings.memoryEnabled ? `On. Minna remembers ${state.memories.length} ${state.memories.length === 1 ? "thing" : "things"}.` : "Off."}
+          <span className="text-ink-2"> Review and control what Minna remembers.</span>
+        </p>
+        <Link href="/app/memory" className="btn-secondary shrink-0">
+          Open
+        </Link>
       </div>
 
       <h2 className="section-title">Notifications</h2>
@@ -203,7 +190,7 @@ export default function SettingsPage() {
         <p className="text-sm">
           Status:{" "}
           <strong>
-            {perm === "granted" ? "On ✅" : perm === "denied" ? "Blocked in your browser" : perm === "unsupported" ? "Not supported" : "Off"}
+            {perm === "granted" ? "On" : perm === "denied" ? "Blocked in your browser" : perm === "unsupported" ? "Not supported" : "Off"}
           </strong>
         </p>
         <div className="flex gap-2">
@@ -221,25 +208,25 @@ export default function SettingsPage() {
             </button>
           )}
         </div>
-        <p className="text-xs text-zinc-500">
-          Tip: add Minna to your home screen (Share → “Add to Home Screen”) so it behaves like an app. Right now notifications
+        <p className="text-xs text-ink-2">
+          Tip: add Minna to your home screen (Share, then “Add to Home Screen”) so it behaves like an app. Right now notifications
           arrive while the app is open or in the background. Notifications when it&apos;s fully closed are coming next.
         </p>
       </div>
 
       <h2 className="section-title">Your data</h2>
       <div className="card flex flex-col gap-3">
-        <p className="text-sm text-zinc-400">Everything is stored on this device only. Make a backup if you switch devices.</p>
+        <p className="text-sm text-ink-2">Everything is stored on this device only. Make a backup if you switch devices.</p>
         <div className="flex flex-wrap gap-2">
           <button className="btn-secondary" onClick={exportData}>
-            ⬇ Export backup
+            Export backup
           </button>
           <button className="btn-secondary" onClick={() => fileRef.current?.click()}>
-            ⬆ Import
+            Import backup
           </button>
           <input ref={fileRef} type="file" accept="application/json" hidden onChange={(e) => e.target.files?.[0] && importData(e.target.files[0])} />
           <button
-            className="btn-ghost !text-rose-300"
+            className="btn-ghost !text-[#b42318]"
             onClick={() => {
               if (confirm("Delete everything and start over? This can't be undone.")) replaceState(initialState());
             }}
