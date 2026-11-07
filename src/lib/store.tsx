@@ -52,7 +52,7 @@ interface Store {
   state: AppState;
   ready: boolean;
   updateSettings: (patch: Partial<Settings>) => void;
-  addReminder: (r: NewReminder) => void;
+  addReminder: (r: NewReminder) => string;
   updateReminder: (id: string, patch: Partial<Reminder>) => void;
   deleteReminder: (id: string) => void;
   completeReminder: (id: string) => void;
@@ -65,6 +65,8 @@ interface Store {
   markListNotified: (nagKey: string) => void;
   snoozeList: (nagKey: string, minutes: number) => void;
   replaceState: (s: AppState) => void;
+  /** Senaste tillståndet direkt, utan att vänta på omrendering */
+  getState: () => AppState;
 }
 
 const Ctx = createContext<Store | null>(null);
@@ -73,18 +75,25 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(initialState);
   const [ready, setReady] = useState(false);
   const loaded = useRef(false);
+  // Alltid senaste tillståndet, även innan React hunnit rendera om
+  const stateRef = useRef<AppState>(state);
+  const apply = useCallback((fn: (s: AppState) => AppState) => {
+    const next = fn(stateRef.current);
+    stateRef.current = next;
+    setState(next);
+  }, []);
 
   useEffect(() => {
-    setState(load());
+    apply(() => load());
     setReady(true);
     loaded.current = true;
     // Synka mellan flikar
     const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY) setState(load());
+      if (e.key === STORAGE_KEY) apply(() => load());
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
-  }, []);
+  }, [apply]);
 
   useEffect(() => {
     if (!loaded.current) return;
@@ -95,23 +104,26 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state]);
 
-  const mapReminder = useCallback((id: string, fn: (r: Reminder) => Reminder) => {
-    setState((s) => ({ ...s, reminders: s.reminders.map((r) => (r.id === id ? fn(r) : r)) }));
-  }, []);
+  const mapReminder = useCallback(
+    (id: string, fn: (r: Reminder) => Reminder) => {
+      apply((s) => ({ ...s, reminders: s.reminders.map((r) => (r.id === id ? fn(r) : r)) }));
+    },
+    [apply],
+  );
 
   const store = useMemo<Store>(
     () => ({
       state,
       ready,
-      updateSettings: (patch) => setState((s) => ({ ...s, settings: { ...s.settings, ...patch } })),
-      addReminder: (r) =>
-        setState((s) => ({
+      updateSettings: (patch) => apply((s) => ({ ...s, settings: { ...s.settings, ...patch } })),
+      addReminder: (r) => {
+        const id = uid();
+        apply((s) => ({
           ...s,
-          reminders: [
-            ...s.reminders,
-            { ...r, id: uid(), done: false, nagCount: 0, createdAt: new Date().toISOString() },
-          ],
-        })),
+          reminders: [...s.reminders, { ...r, id, done: false, nagCount: 0, createdAt: new Date().toISOString() }],
+        }));
+        return id;
+      },
       updateReminder: (id, patch) =>
         mapReminder(id, (r) => {
           const next = { ...r, ...patch };
@@ -123,7 +135,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           }
           return next;
         }),
-      deleteReminder: (id) => setState((s) => ({ ...s, reminders: s.reminders.filter((r) => r.id !== id) })),
+      deleteReminder: (id) => apply((s) => ({ ...s, reminders: s.reminders.filter((r) => r.id !== id) })),
       completeReminder: (id) =>
         mapReminder(id, (r) => {
           if (r.done) {
@@ -146,24 +158,24 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           snoozedUntil: undefined,
         })),
       saveRoutine: (routine) =>
-        setState((s) => {
+        apply((s) => {
           const exists = s.routines.some((r) => r.id === routine.id);
           return {
             ...s,
             routines: exists ? s.routines.map((r) => (r.id === routine.id ? routine : r)) : [...s.routines, routine],
           };
         }),
-      deleteRoutine: (id) => setState((s) => ({ ...s, routines: s.routines.filter((r) => r.id !== id) })),
-      updateSchool: (patch) => setState((s) => ({ ...s, school: { ...s.school, ...patch } })),
+      deleteRoutine: (id) => apply((s) => ({ ...s, routines: s.routines.filter((r) => r.id !== id) })),
+      updateSchool: (patch) => apply((s) => ({ ...s, school: { ...s.school, ...patch } })),
       toggleCheck: (key, itemId) =>
-        setState((s) => {
+        apply((s) => {
           const cur = new Set(s.checks[key] ?? []);
           if (cur.has(itemId)) cur.delete(itemId);
           else cur.add(itemId);
           return { ...s, checks: { ...s.checks, [key]: [...cur] } };
         }),
       markListNotified: (nagKey) =>
-        setState((s) => ({
+        apply((s) => ({
           ...s,
           listNags: {
             ...s.listNags,
@@ -171,7 +183,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           },
         })),
       snoozeList: (nagKey, minutes) =>
-        setState((s) => ({
+        apply((s) => ({
           ...s,
           listNags: {
             ...s.listNags,
@@ -182,9 +194,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             },
           },
         })),
-      replaceState: (s) => setState(s),
+      replaceState: (s) => apply(() => s),
+      getState: () => stateRef.current,
     }),
-    [state, ready, mapReminder],
+    [state, ready, mapReminder, apply],
   );
 
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>;

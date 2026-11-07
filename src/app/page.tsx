@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { AreaFilter, type AreaFilterValue } from "@/components/AreaFilter";
 import { ChecklistCard } from "@/components/ChecklistCard";
@@ -55,6 +56,18 @@ export default function TodayPage() {
       </header>
 
       <NotificationBanner />
+
+      <Link
+        href="/chatt"
+        className="card mb-3 flex items-center gap-3 hover:border-violet-300 dark:hover:border-violet-800 transition"
+      >
+        <span className="text-2xl">💬</span>
+        <span className="flex-1">
+          <span className="block font-medium">Berätta för Minna</span>
+          <span className="block text-sm text-zinc-500">”Jag har kemiprov på torsdag…” så lägger jag in resten.</span>
+        </span>
+        <span className="text-zinc-400">›</span>
+      </Link>
 
       <div className="card mb-4">
         <ReminderForm compact defaultArea={filter === "alla" ? undefined : filter} onSubmit={addReminder} />

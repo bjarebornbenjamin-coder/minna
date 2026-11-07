@@ -11,7 +11,20 @@ npm run dev
 
 Öppna sedan http://localhost:3000
 
-## Det här finns nu (steg 1–2)
+## Chatt med Minna (AI)
+
+Skriv eller prata som till en person, till exempel *"Jag har kemiprov på torsdag"* eller *"Gör en packlista för gymmet måndagar och torsdagar"*. Minna lägger in påminnelser, rutiner och packlistor automatiskt. Varje sak den skapar kan ångras direkt i chatten.
+
+Chatten kräver en API-nyckel från https://console.anthropic.com:
+
+- **Lokalt:** kopiera `.env.example` till `.env.local` och fyll i `ANTHROPIC_API_KEY`.
+- **Vercel:** Settings → Environment Variables → lägg till `ANTHROPIC_API_KEY` (och gärna `MINNA_ACCESS_CODE`), och publicera om.
+
+Om du sätter `MINNA_ACCESS_CODE` måste samma kod anges i appen under Inställningar → Chatt. Det hindrar andra som hittar länken från att använda din API-nyckel.
+
+Tekniskt: `src/app/api/chat/route.ts` anropar Claude med verktyg (`src/lib/assistant/tools.ts`). Verktygen körs i webbläsaren (`src/lib/assistant/execute.ts`), där all data finns.
+
+## Det här finns nu (steg 1–3)
 
 - **Områden:** Privat 🏠, Jobb 💼 och Skola 🎒. Slå på de du vill ha.
 - **Påminnelser** med tid, upprepning och **tjat-nivå** (av / mild / normal / mamma-läge).
@@ -41,7 +54,6 @@ src/
 
 ## Nästa steg
 
-3. AI-assistent (Claude API): skriv eller prata naturligt, till exempel "påminn mig på fredag att ringa tandläkaren".
 4. Google Kalender och Gmail.
 5. Jobbfunktioner: mötesförberedelser, uppföljningar, veckorapport.
 6. Konto och synk (Supabase) och push-notiser när appen är stängd.

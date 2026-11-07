@@ -8,11 +8,12 @@ import { NagEngine } from "./NagEngine";
 import { Onboarding } from "./Onboarding";
 
 const NAV = [
-  { href: "/", label: "Idag", icon: "☀️" },
-  { href: "/paminnelser", label: "Påminnelser", icon: "🔔" },
-  { href: "/rutiner", label: "Rutiner", icon: "📋" },
-  { href: "/schema", label: "Skola", icon: "🎒", area: "skola" as const },
-  { href: "/installningar", label: "Inställningar", icon: "⚙️" },
+  { href: "/", label: "Idag", short: "Idag", icon: "☀️" },
+  { href: "/chatt", label: "Chatta", short: "Chatt", icon: "💬" },
+  { href: "/paminnelser", label: "Påminnelser", short: "Uppgifter", icon: "🔔" },
+  { href: "/rutiner", label: "Rutiner", short: "Rutiner", icon: "📋" },
+  { href: "/schema", label: "Skola", short: "Skola", icon: "🎒", area: "skola" as const },
+  { href: "/installningar", label: "Inställningar", short: "Mer", icon: "⚙️" },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -70,7 +71,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               }`}
             >
               <span className="text-lg leading-none">{n.icon}</span>
-              {n.label}
+              {n.short}
             </Link>
           ))}
         </div>

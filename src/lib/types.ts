@@ -67,6 +67,8 @@ export interface Settings {
   workHours: { start: string; end: string; days: number[] };
   quietWorkOutsideHours: boolean;
   onboarded: boolean;
+  /** Åtkomstkod till chatten om servern kräver det */
+  accessCode?: string;
 }
 
 export interface AppState {

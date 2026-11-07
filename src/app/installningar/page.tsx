@@ -156,6 +156,26 @@ export default function SettingsPage() {
         </>
       )}
 
+      <h2 className="section-title">Chatt</h2>
+      <div className="card flex flex-col gap-2">
+        <label className="label" htmlFor="code">
+          Åtkomstkod
+        </label>
+        <input
+          id="code"
+          type="password"
+          className="input"
+          placeholder="Bara om din server kräver en kod"
+          value={settings.accessCode ?? ""}
+          onChange={(e) => updateSettings({ accessCode: e.target.value })}
+          autoComplete="off"
+        />
+        <p className="text-xs text-zinc-500">
+          Om MINNA_ACCESS_CODE är satt på servern måste samma kod anges här. Det hindrar andra från att använda din
+          chatt (och din API-nyckel).
+        </p>
+      </div>
+
       <h2 className="section-title">Notiser</h2>
       <div className="card flex flex-col gap-3">
         <p className="text-sm">
