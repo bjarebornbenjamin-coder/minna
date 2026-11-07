@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AREAS, NAG_LEVELS } from "@/lib/areas";
-import { WEEKDAYS_SHORT } from "@/lib/dates";
+import { formatClock, WEEKDAYS_SHORT } from "@/lib/dates";
 import { uid } from "@/lib/defaults";
 import { useStore } from "@/lib/store";
 import type { NagLevel, Routine } from "@/lib/types";
@@ -12,9 +12,9 @@ const EMOJIS = ["🚪", "🌙", "☀️", "🏋️", "🧳", "🗂️", "✅", "
 
 function describeDays(days: number[]): string {
   const s = [...days].sort().join(",");
-  if (s === "0,1,2,3,4,5,6") return "Varje dag";
-  if (s === "1,2,3,4,5") return "Vardagar";
-  if (s === "0,6") return "Helger";
+  if (s === "0,1,2,3,4,5,6") return "Every day";
+  if (s === "1,2,3,4,5") return "Weekdays";
+  if (s === "0,6") return "Weekends";
   return DAY_ORDER.filter((d) => days.includes(d))
     .map((d) => WEEKDAYS_SHORT[d])
     .join(", ");
@@ -39,16 +39,16 @@ export default function RoutinesPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
-        <h1 className="text-2xl font-bold tracking-tight">Rutiner & checklistor</h1>
+        <h1 className="font-display text-3xl font-semibold tracking-tight">Routines</h1>
         {!editing && (
           <button className="btn-primary" onClick={() => setEditing(newRoutine())}>
-            + Ny
+            + New
           </button>
         )}
       </div>
       <p className="text-sm text-zinc-500 mb-4">
-        Checklistor som dyker upp vissa dagar, till exempel ”innan du går hemifrån” eller ”packa gymväskan”. Jag tjatar
-        tills allt är avbockat.
+        Checklists that show up on certain days, like “before you leave home” or “pack your gym bag”. I keep nudging
+        until everything is checked off.
       </p>
 
       {editing && (
@@ -75,13 +75,13 @@ export default function RoutinesPage() {
           <button
             key={r.id}
             onClick={() => setEditing(r)}
-            className="card text-left flex items-center gap-3 hover:border-violet-300 dark:hover:border-violet-800 transition"
+            className="card text-left flex items-center gap-3 hover:!border-violet-400/30 transition"
           >
             <span className="text-2xl">{r.emoji}</span>
             <span className="flex-1 min-w-0">
               <span className="block font-medium">{r.name}</span>
               <span className="block text-xs text-zinc-500">
-                {describeDays(r.days)} kl {r.time} · {r.items.length} saker · tjat: {NAG_LEVELS[r.nag].label.toLowerCase()}
+                {describeDays(r.days)} at {formatClock(r.time)} · {r.items.length} items · nag: {NAG_LEVELS[r.nag].label.toLowerCase()}
               </span>
             </span>
             {state.settings.areas.length > 1 && (
@@ -90,7 +90,7 @@ export default function RoutinesPage() {
           </button>
         ))}
         {routines.length === 0 && !editing && (
-          <p className="text-center text-zinc-500 py-12">Inga rutiner än. Skapa din första! 👆</p>
+          <p className="text-center text-zinc-500 py-12">No routines yet. Create your first one 👆</p>
         )}
       </div>
     </div>
@@ -121,16 +121,16 @@ function RoutineEditor({
   };
 
   return (
-    <div className="card mb-4 flex flex-col gap-4 border-violet-300 dark:border-violet-800">
+    <div className="card mb-4 flex flex-col gap-4 !border-violet-400/30">
       <div className="flex gap-2">
-        <select className="input w-16 text-center" value={r.emoji} onChange={(e) => set({ emoji: e.target.value })} aria-label="Ikon">
+        <select className="input w-16 text-center" value={r.emoji} onChange={(e) => set({ emoji: e.target.value })} aria-label="Icon">
           {EMOJIS.map((e) => (
             <option key={e}>{e}</option>
           ))}
         </select>
         <input
           className="input"
-          placeholder="Namn, t.ex. Packa gymväskan"
+          placeholder="Name, e.g. Pack your gym bag"
           value={r.name}
           onChange={(e) => set({ name: e.target.value })}
           autoFocus
@@ -148,7 +148,7 @@ function RoutineEditor({
       )}
 
       <div>
-        <label className="label">Dagar</label>
+        <label className="label">Days</label>
         <div className="flex gap-1.5">
           {DAY_ORDER.map((d) => (
             <button
@@ -165,11 +165,11 @@ function RoutineEditor({
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="label">Tid</label>
+          <label className="label">Time</label>
           <input type="time" className="input" value={r.time} onChange={(e) => set({ time: e.target.value })} />
         </div>
         <div>
-          <label className="label">Tjat-nivå</label>
+          <label className="label">Nag level</label>
           <select className="input" value={r.nag} onChange={(e) => set({ nag: e.target.value as NagLevel })}>
             {(Object.keys(NAG_LEVELS) as NagLevel[]).map((n) => (
               <option key={n} value={n}>
@@ -181,15 +181,15 @@ function RoutineEditor({
       </div>
 
       <div>
-        <label className="label">Saker på listan</label>
+        <label className="label">Items on the list</label>
         <ul className="flex flex-col gap-1 mb-2">
           {r.items.map((item) => (
-            <li key={item.id} className="flex items-center gap-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/60 px-3 py-1.5">
+            <li key={item.id} className="flex items-center gap-2 rounded-xl bg-white/[0.04] border border-white/[0.06] px-3 py-1.5">
               <span className="flex-1 text-sm">{item.text}</span>
               <button
                 className="btn-ghost text-xs"
                 onClick={() => set({ items: r.items.filter((i) => i.id !== item.id) })}
-                aria-label={`Ta bort ${item.text}`}
+                aria-label={`Remove ${item.text}`}
               >
                 ✕
               </button>
@@ -203,29 +203,29 @@ function RoutineEditor({
             addItem();
           }}
         >
-          <input className="input" placeholder="Lägg till sak…" value={newItem} onChange={(e) => setNewItem(e.target.value)} />
+          <input className="input" placeholder="Add an item…" value={newItem} onChange={(e) => setNewItem(e.target.value)} />
           <button className="btn-secondary" disabled={!newItem.trim()}>
-            Lägg till
+            Add
           </button>
         </form>
       </div>
 
       <div className="flex items-center gap-2">
         {onDelete && (
-          <button className="btn-ghost text-rose-600" onClick={onDelete}>
-            Ta bort
+          <button className="btn-ghost !text-rose-300" onClick={onDelete}>
+            Delete
           </button>
         )}
         <div className="flex-1" />
         <button className="btn-secondary" onClick={onCancel}>
-          Avbryt
+          Cancel
         </button>
         <button
           className="btn-primary"
           disabled={!r.name.trim() || r.days.length === 0 || r.items.length === 0}
           onClick={() => onSave({ ...r, name: r.name.trim() })}
         >
-          Spara
+          Save
         </button>
       </div>
     </div>

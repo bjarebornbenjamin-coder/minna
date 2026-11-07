@@ -3,7 +3,7 @@ import type { ChatMessage, ToolCall, TurnResult } from "../chat-types";
 import { ASSISTANT_TOOLS, SYSTEM_PROMPT } from "../tools";
 
 const MODEL = process.env.OPENAI_MODEL || "gpt-5.4-mini";
-// Låg "reasoning effort" ger snabba svar i chatten. Sätt OPENAI_REASONING_EFFORT=off för modeller som inte stöder det.
+// Low reasoning effort gives fast chat replies. Set OPENAI_REASONING_EFFORT=off for models that do not support it.
 const EFFORT = process.env.OPENAI_REASONING_EFFORT || "low";
 
 const TOOLS: OpenAI.Chat.Completions.ChatCompletionTool[] = ASSISTANT_TOOLS.map((t) => ({
@@ -30,7 +30,7 @@ function toOpenAI(messages: ChatMessage[]): OpenAI.Chat.Completions.ChatCompleti
       });
     } else {
       for (const r of m.results) {
-        out.push({ role: "tool", tool_call_id: r.id, content: r.isError ? `FEL: ${r.content}` : r.content });
+        out.push({ role: "tool", tool_call_id: r.id, content: r.isError ? `ERROR: ${r.content}` : r.content });
       }
     }
   }
@@ -42,7 +42,7 @@ export async function runOpenAITurn(messages: ChatMessage[], context: string): P
   const completion = await client.chat.completions.create({
     model: MODEL,
     messages: [
-      // Stabil instruktion först så att OpenAIs automatiska cache kan återanvända den
+      // Stable instructions first so OpenAI's automatic cache can reuse them
       { role: "developer", content: SYSTEM_PROMPT },
       { role: "developer", content: context },
       ...toOpenAI(messages),
@@ -53,7 +53,7 @@ export async function runOpenAITurn(messages: ChatMessage[], context: string): P
 
   const choice = completion.choices[0];
   const msg = choice?.message;
-  if (!msg) throw new Error("Tomt svar från OpenAI");
+  if (!msg) throw new Error("Empty response from OpenAI");
 
   if (msg.refusal) {
     return { message: { role: "assistant", text: msg.refusal, toolCalls: [], provider: "openai" }, stop: "refusal" };

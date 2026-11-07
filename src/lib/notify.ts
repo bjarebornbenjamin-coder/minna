@@ -9,7 +9,7 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
   return Notification.requestPermission();
 }
 
-/** Visar en systemnotis om användaren har tillåtit det. Går via service worker när den finns (krävs på mobil). */
+/** Shows a system notification if the user allowed it. Uses the service worker when available (required on mobile). */
 export async function showSystemNotification(title: string, body: string, tag: string): Promise<void> {
   if (!notificationsSupported() || Notification.permission !== "granted") return;
   const options: NotificationOptions = { body, tag, icon: "/icon.svg", badge: "/icon.svg" };
@@ -23,6 +23,6 @@ export async function showSystemNotification(title: string, body: string, tag: s
     }
     new Notification(title, options);
   } catch {
-    // vissa webbläsare tillåter inte notiser utan service worker
+    // some browsers don't allow notifications without a service worker
   }
 }

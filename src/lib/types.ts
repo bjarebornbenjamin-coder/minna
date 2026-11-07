@@ -11,13 +11,13 @@ export interface Reminder {
   title: string;
   notes?: string;
   area: AreaId;
-  /** ISO-datum/tid när påminnelsen ska gå */
+  /** ISO date/time when the reminder is due */
   due: string;
   repeat: Repeat;
   nag: NagLevel;
   done: boolean;
   doneAt?: string;
-  /** Antal gånger vi har påmint om nuvarande förekomst */
+  /** Number of times we have nagged about the current occurrence */
   nagCount: number;
   lastNotifiedAt?: string;
   snoozedUntil?: string;
@@ -37,7 +37,7 @@ export interface Routine {
   area: AreaId;
   /** "HH:MM" */
   time: string;
-  /** 0 = söndag ... 6 = lördag */
+  /** 0 = Sunday ... 6 = Saturday */
   days: number[];
   items: ChecklistItem[];
   nag: NagLevel;
@@ -46,7 +46,7 @@ export interface Routine {
 export interface Subject {
   id: string;
   name: string;
-  /** Saker som ska med när man har ämnet */
+  /** Things to bring when you have the subject */
   items: string[];
 }
 
@@ -54,9 +54,9 @@ export interface SchoolSettings {
   subjects: Subject[];
   /** veckodag (1-5) -> lista med subject-id */
   schedule: Record<number, string[]>;
-  /** När kvällen innan vi ska påminna om att packa väskan, "HH:MM" */
+  /** When the evening before to remind about packing, "HH:MM" */
   packTime: string;
-  /** Morgonpåminnelse dagen samma dag, "HH:MM" */
+  /** Morning reminder on the day itself, "HH:MM" */
   morningTime: string;
 }
 
@@ -67,7 +67,7 @@ export interface Settings {
   workHours: { start: string; end: string; days: number[] };
   quietWorkOutsideHours: boolean;
   onboarded: boolean;
-  /** Åtkomstkod till chatten om servern kräver det */
+  /** Access code for the chat if the server requires one */
   accessCode?: string;
 }
 
@@ -79,6 +79,6 @@ export interface AppState {
   school: SchoolSettings;
   /** nyckel: `${listId}:${YYYY-MM-DD}` -> avbockade item-id:n */
   checks: Record<string, string[]>;
-  /** nyckel: `${listId}:${YYYY-MM-DD}` -> antal tjat för checklistor */
+  /** key: `${listId}:${YYYY-MM-DD}` -> nag count for checklists */
   listNags: Record<string, { count: number; last?: string; snoozedUntil?: string }>;
 }

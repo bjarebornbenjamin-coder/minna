@@ -13,16 +13,16 @@ function quickTimes(now: Date): { label: string; date: Date }[] {
   const tonight = atTime(now, "19:00");
   const tomorrowMorning = atTime(addDays(now, 1), "07:30");
   const tomorrowWork = atTime(addDays(now, 1), "09:00");
-  const opts = [{ label: "Om 1 h", date: inHour }];
-  if (tonight > now) opts.push({ label: "Ikväll 19", date: tonight });
-  opts.push({ label: "Imorgon 07:30", date: tomorrowMorning }, { label: "Imorgon 09", date: tomorrowWork });
+  const opts = [{ label: "In 1 hour", date: inHour }];
+  if (tonight > now) opts.push({ label: "Tonight 7 PM", date: tonight });
+  opts.push({ label: "Tomorrow 7:30 AM", date: tomorrowMorning }, { label: "Tomorrow 9 AM", date: tomorrowWork });
   return opts;
 }
 
 export function ReminderForm({
   initial,
   defaultArea,
-  submitLabel = "Lägg till",
+  submitLabel = "Add",
   onSubmit,
   onCancel,
   compact = false,
@@ -69,11 +69,11 @@ export function ReminderForm({
       <div className="flex gap-2">
         <input
           className="input"
-          placeholder="Vad ska du komma ihåg?"
+          placeholder="What do you need to remember?"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onFocus={() => setExpanded(true)}
-          aria-label="Påminnelse"
+          aria-label="Reminder"
         />
         <button className="btn-primary shrink-0" disabled={!title.trim()}>
           {submitLabel}
@@ -112,11 +112,11 @@ export function ReminderForm({
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="label">När</label>
+              <label className="label">When</label>
               <input type="datetime-local" className="input" value={due} onChange={(e) => setDue(e.target.value)} />
             </div>
             <div>
-              <label className="label">Upprepa</label>
+              <label className="label">Repeat</label>
               <select className="input" value={repeat} onChange={(e) => setRepeat(e.target.value as Repeat)}>
                 {(Object.keys(REPEATS) as Repeat[]).map((r) => (
                   <option key={r} value={r}>
@@ -126,7 +126,7 @@ export function ReminderForm({
               </select>
             </div>
             <div>
-              <label className="label">Tjat-nivå</label>
+              <label className="label">Nag level</label>
               <select className="input" value={nag} onChange={(e) => setNag(e.target.value as NagLevel)}>
                 {(Object.keys(NAG_LEVELS) as NagLevel[]).map((n) => (
                   <option key={n} value={n}>
@@ -140,7 +140,7 @@ export function ReminderForm({
 
           <textarea
             className="input min-h-[60px]"
-            placeholder="Anteckning (valfritt)"
+            placeholder="Note (optional)"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
           />
@@ -148,7 +148,7 @@ export function ReminderForm({
           {onCancel && (
             <div className="flex justify-end">
               <button type="button" className="btn-ghost" onClick={onCancel}>
-                Avbryt
+                Cancel
               </button>
             </div>
           )}

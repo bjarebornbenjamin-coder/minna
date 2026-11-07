@@ -13,11 +13,11 @@ export function NotificationBanner() {
   if (perm !== "default") return null;
 
   return (
-    <div className="card flex items-center gap-3 bg-violet-50 dark:bg-violet-950/30 border-violet-200 dark:border-violet-900 mb-4">
+    <div className="card flex items-center gap-3 !border-violet-400/25 !bg-violet-500/[0.08] mb-4">
       <span className="text-2xl">🔔</span>
-      <p className="flex-1 text-sm">Slå på notiser så att jag kan påminna dig även när du är i en annan flik.</p>
+      <p className="flex-1 text-sm">Turn on notifications so I can remind you even when you&apos;re in another tab.</p>
       <button className="btn-primary" onClick={async () => setPerm(await requestNotificationPermission())}>
-        Slå på
+        Turn on
       </button>
     </div>
   );

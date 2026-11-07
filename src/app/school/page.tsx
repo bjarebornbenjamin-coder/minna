@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ChecklistCard } from "@/components/ChecklistCard";
 import { schoolPackFor } from "@/lib/checklists";
-import { addDays, WEEKDAYS } from "@/lib/dates";
+import { addDays, WEEKDAYS_SHORT } from "@/lib/dates";
 import { uid } from "@/lib/defaults";
 import { useNow, useStore } from "@/lib/store";
 import type { Subject } from "@/lib/types";
@@ -17,10 +17,10 @@ export default function SchoolPage() {
   const [newSubject, setNewSubject] = useState("");
 
   if (!state.settings.areas.includes("skola")) {
-    return <p className="text-zinc-500">Slå på området Skola under Inställningar för att använda schemat.</p>;
+    return <p className="text-zinc-400">Turn on the School area in Settings to use the schedule.</p>;
   }
 
-  // Nästa skoldag med lektioner, för förhandsvisning
+  // Next school day with classes, for the preview
   let preview = null;
   for (let i = 1; i <= 7 && !preview; i++) preview = schoolPackFor(state, addDays(now, i));
 
@@ -28,64 +28,54 @@ export default function SchoolPage() {
     updateSchool({ subjects: school.subjects.map((s) => (s.id === id ? { ...s, ...patch } : s)) });
 
   const removeSubject = (id: string) => {
-    const schedule = Object.fromEntries(
-      Object.entries(school.schedule).map(([d, ids]) => [d, ids.filter((x) => x !== id)]),
-    );
+    const schedule = Object.fromEntries(Object.entries(school.schedule).map(([d, ids]) => [d, ids.filter((x) => x !== id)]));
     updateSchool({ subjects: school.subjects.filter((s) => s.id !== id), schedule });
   };
 
   const toggleDay = (day: number, subjectId: string) => {
     const cur = school.schedule[day] ?? [];
     updateSchool({
-      schedule: {
-        ...school.schedule,
-        [day]: cur.includes(subjectId) ? cur.filter((x) => x !== subjectId) : [...cur, subjectId],
-      },
+      schedule: { ...school.schedule, [day]: cur.includes(subjectId) ? cur.filter((x) => x !== subjectId) : [...cur, subjectId] },
     });
   };
 
   return (
     <div>
-      <h1 className="text-2xl font-bold tracking-tight mb-1">Skola 🎒</h1>
-      <p className="text-sm text-zinc-500 mb-4">
-        Fyll i schemat en gång. Sedan får du en packlista varje kväll för nästa dag, och en koll på morgonen innan du
-        går.
+      <h1 className="font-display text-3xl font-semibold tracking-tight mb-1">School</h1>
+      <p className="text-sm text-zinc-400 mb-4">
+        Fill in your schedule once. You&apos;ll get a packing list every evening for the next day, plus a check in the morning
+        before you leave.
       </p>
 
-      <h2 className="section-title">Påminnelsetider</h2>
+      <h2 className="section-title">Reminder times</h2>
       <div className="card grid grid-cols-2 gap-3">
         <div>
-          <label className="label">Packa väskan (kvällen innan)</label>
+          <label className="label">Pack your bag (night before)</label>
           <input type="time" className="input" value={school.packTime} onChange={(e) => updateSchool({ packTime: e.target.value })} />
         </div>
         <div>
-          <label className="label">Morgonkoll</label>
-          <input
-            type="time"
-            className="input"
-            value={school.morningTime}
-            onChange={(e) => updateSchool({ morningTime: e.target.value })}
-          />
+          <label className="label">Morning check</label>
+          <input type="time" className="input" value={school.morningTime} onChange={(e) => updateSchool({ morningTime: e.target.value })} />
         </div>
       </div>
 
-      <h2 className="section-title">Veckoschema</h2>
-      <p className="text-xs text-zinc-500 -mt-1 mb-2">Tryck för att välja vilka ämnen du har varje dag.</p>
+      <h2 className="section-title">Weekly schedule</h2>
+      <p className="text-xs text-zinc-500 -mt-1 mb-2">Tap to choose which subjects you have each day.</p>
       <div className="card overflow-x-auto p-0">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-zinc-200 dark:border-zinc-800">
-              <th className="text-left font-medium p-3">Ämne</th>
+            <tr className="border-b border-white/[0.06]">
+              <th className="text-left font-medium text-zinc-400 p-3">Subject</th>
               {SCHOOL_DAYS.map((d) => (
-                <th key={d} className="font-medium p-2 w-12">
-                  {WEEKDAYS[d].slice(0, 3)}
+                <th key={d} className="font-medium text-zinc-400 p-2 w-12">
+                  {WEEKDAYS_SHORT[d]}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
             {school.subjects.map((s) => (
-              <tr key={s.id} className="border-b last:border-0 border-zinc-100 dark:border-zinc-800/60">
+              <tr key={s.id} className="border-b last:border-0 border-white/[0.04]">
                 <td className="p-3 font-medium whitespace-nowrap">{s.name}</td>
                 {SCHOOL_DAYS.map((d) => {
                   const on = (school.schedule[d] ?? []).includes(s.id);
@@ -93,10 +83,12 @@ export default function SchoolPage() {
                     <td key={d} className="p-1 text-center">
                       <button
                         onClick={() => toggleDay(d, s.id)}
-                        className={`h-8 w-8 rounded-lg transition ${
-                          on ? "bg-amber-400 text-amber-950" : "bg-zinc-100 dark:bg-zinc-800 text-transparent hover:text-zinc-400"
+                        className={`h-8 w-8 rounded-xl transition ${
+                          on
+                            ? "bg-gradient-to-br from-amber-300 to-amber-500 text-amber-950 shadow-[0_0_16px_-2px_rgba(251,191,36,0.7)]"
+                            : "bg-white/[0.04] text-transparent hover:text-zinc-500 hover:bg-white/[0.08]"
                         }`}
-                        aria-label={`${s.name} ${WEEKDAYS[d]}`}
+                        aria-label={`${s.name} ${WEEKDAYS_SHORT[d]}`}
                         aria-pressed={on}
                       >
                         ✓
@@ -110,7 +102,7 @@ export default function SchoolPage() {
         </table>
       </div>
 
-      <h2 className="section-title">Ämnen och vad som ska med</h2>
+      <h2 className="section-title">Subjects and what to bring</h2>
       <div className="flex flex-col gap-2">
         {school.subjects.map((s) => (
           <SubjectEditor key={s.id} subject={s} onChange={(p) => updateSubject(s.id, p)} onRemove={() => removeSubject(s.id)} />
@@ -125,51 +117,43 @@ export default function SchoolPage() {
             setNewSubject("");
           }}
         >
-          <input className="input" placeholder="Nytt ämne, t.ex. Slöjd" value={newSubject} onChange={(e) => setNewSubject(e.target.value)} />
+          <input className="input" placeholder="New subject, e.g. Music" value={newSubject} onChange={(e) => setNewSubject(e.target.value)} />
           <button className="btn-secondary" disabled={!newSubject.trim()}>
-            Lägg till
+            Add
           </button>
         </form>
       </div>
 
       {preview && (
         <>
-          <h2 className="section-title">Förhandsvisning</h2>
-          <ChecklistCard list={preview} subtitle="Så här ser packlistan ut" />
+          <h2 className="section-title">Preview</h2>
+          <ChecklistCard list={preview} subtitle="This is what your packing list looks like" />
         </>
       )}
     </div>
   );
 }
 
-function SubjectEditor({
-  subject,
-  onChange,
-  onRemove,
-}: {
-  subject: Subject;
-  onChange: (p: Partial<Subject>) => void;
-  onRemove: () => void;
-}) {
+function SubjectEditor({ subject, onChange, onRemove }: { subject: Subject; onChange: (p: Partial<Subject>) => void; onRemove: () => void }) {
   const [item, setItem] = useState("");
   return (
     <div className="card py-3">
       <div className="flex items-center gap-2 mb-2">
         <input
-          className="font-medium bg-transparent outline-none flex-1 focus:underline"
+          className="font-medium bg-transparent outline-none flex-1 focus:underline decoration-violet-400"
           value={subject.name}
           onChange={(e) => onChange({ name: e.target.value })}
-          aria-label="Ämnesnamn"
+          aria-label="Subject name"
         />
-        <button className="btn-ghost text-xs text-rose-600" onClick={onRemove}>
-          Ta bort
+        <button className="btn-ghost text-xs !text-rose-300" onClick={onRemove}>
+          Remove
         </button>
       </div>
       <div className="flex flex-wrap gap-1.5 items-center">
         {subject.items.map((it) => (
-          <span key={it} className="chip bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100">
+          <span key={it} className="chip bg-amber-400/10 text-amber-200 ring-1 ring-amber-400/20">
             {it}
-            <button onClick={() => onChange({ items: subject.items.filter((x) => x !== it) })} aria-label={`Ta bort ${it}`}>
+            <button onClick={() => onChange({ items: subject.items.filter((x) => x !== it) })} aria-label={`Remove ${it}`}>
               ✕
             </button>
           </span>
@@ -183,8 +167,8 @@ function SubjectEditor({
           }}
         >
           <input
-            className="text-xs bg-transparent outline-none border-b border-dashed border-zinc-300 dark:border-zinc-700 w-32 py-0.5"
-            placeholder="+ sak att ta med"
+            className="text-xs bg-transparent outline-none border-b border-dashed border-white/20 w-32 py-0.5 placeholder:text-zinc-500"
+            placeholder="+ add item to bring"
             value={item}
             onChange={(e) => setItem(e.target.value)}
           />

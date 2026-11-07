@@ -1,4 +1,4 @@
-// Minimal service worker: gör appen installerbar och låter notiser öppna appen.
+// Minimal service worker: makes the app installable and lets notifications open the app.
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
 

@@ -1,33 +1,35 @@
-import { AREAS, NAG_LEVELS, REPEATS } from "../areas";
-import { dayKey, formatTime, WEEKDAYS } from "../dates";
-import type { AppState } from "../types";
+import { NAG_LEVELS, REPEATS } from "../areas";
+import { dayKey, hhmm, WEEKDAYS } from "../dates";
+import type { AppState, AreaId } from "../types";
+
+const AREA_NAME: Record<AreaId, string> = { privat: "personal", jobb: "work", skola: "school" };
 
 function localStamp(d: Date): string {
-  return `${dayKey(d)}T${formatTime(d)}`;
+  return `${dayKey(d)}T${hhmm(d)}`;
 }
 
-/** Text om användarens situation som skickas med varje meddelande */
+/** Text about the user's situation, sent with every message */
 export function buildContext(state: AppState, now: Date = new Date()): string {
   const { settings } = state;
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const lines: string[] = [];
 
-  lines.push("# Aktuell situation");
-  lines.push(`Nu: ${WEEKDAYS[now.getDay()].toLowerCase()} ${localStamp(now)} (tidszon ${tz})`);
-  lines.push("Kommande 7 dagar:");
+  lines.push("# Current situation");
+  lines.push(`Now: ${WEEKDAYS[now.getDay()]} ${localStamp(now)} (time zone ${tz})`);
+  lines.push("Next 7 days:");
   for (let i = 0; i < 7; i++) {
     const d = new Date(now);
     d.setDate(d.getDate() + i);
-    lines.push(`- ${WEEKDAYS[d.getDay()]} ${dayKey(d)}${i === 0 ? " (idag)" : i === 1 ? " (imorgon)" : ""}`);
+    lines.push(`- ${WEEKDAYS[d.getDay()]} ${dayKey(d)}${i === 0 ? " (today)" : i === 1 ? " (tomorrow)" : ""}`);
   }
   lines.push("");
-  lines.push("# Användaren");
-  lines.push(`Namn: ${settings.name || "(okänt)"}`);
-  lines.push(`Önskad ton: ${settings.tone}`);
-  lines.push(`Aktiva områden: ${settings.areas.map((a) => AREAS[a].label.toLowerCase()).join(", ")}`);
+  lines.push("# The user");
+  lines.push(`Name: ${settings.name || "(unknown)"}`);
+  lines.push(`Preferred tone: ${{ varm: "warm", saklig: "direct", rolig: "playful" }[settings.tone]}`);
+  lines.push(`Active areas: ${settings.areas.map((a) => AREA_NAME[a]).join(", ")}`);
   if (settings.areas.includes("jobb")) {
-    const days = settings.workHours.days.map((d) => WEEKDAYS[d].slice(0, 3).toLowerCase()).join(", ");
-    lines.push(`Arbetstid: ${settings.workHours.start}–${settings.workHours.end} (${days})`);
+    const days = settings.workHours.days.map((d) => WEEKDAYS[d].slice(0, 3)).join(", ");
+    lines.push(`Work hours: ${settings.workHours.start}–${settings.workHours.end} (${days})`);
   }
 
   const active = state.reminders
@@ -35,17 +37,19 @@ export function buildContext(state: AppState, now: Date = new Date()): string {
     .sort((a, b) => a.due.localeCompare(b.due))
     .slice(0, 80);
   lines.push("");
-  lines.push(`# Aktiva påminnelser (${active.length})`);
-  if (active.length === 0) lines.push("(inga)");
+  lines.push(`# Active reminders (${active.length})`);
+  if (active.length === 0) lines.push("(none)");
   for (const r of active) {
     const extra = [
       r.repeat !== "ingen" ? REPEATS[r.repeat].toLowerCase() : null,
-      `tjat: ${NAG_LEVELS[r.nag].label.toLowerCase()}`,
-      new Date(r.due) <= now ? "FÖRSENAD" : null,
+      `nag: ${NAG_LEVELS[r.nag].label.toLowerCase()}`,
+      new Date(r.due) <= now ? "OVERDUE" : null,
     ]
       .filter(Boolean)
       .join(", ");
-    lines.push(`- [${r.id}] ${r.title} | ${localStamp(new Date(r.due))} | ${r.area} | ${extra}${r.notes ? ` | ${r.notes}` : ""}`);
+    lines.push(
+      `- [${r.id}] ${r.title} | ${localStamp(new Date(r.due))} | ${AREA_NAME[r.area]} | ${extra}${r.notes ? ` | ${r.notes}` : ""}`,
+    );
   }
 
   const doneRecent = state.reminders
@@ -53,37 +57,35 @@ export function buildContext(state: AppState, now: Date = new Date()): string {
     .slice(-15);
   if (doneRecent.length) {
     lines.push("");
-    lines.push("# Klart senaste dagarna");
+    lines.push("# Completed in the last few days");
     for (const r of doneRecent) lines.push(`- [${r.id}] ${r.title}`);
   }
 
   const routines = state.routines.filter((r) => settings.areas.includes(r.area));
   lines.push("");
-  lines.push("# Rutiner/checklistor");
-  if (routines.length === 0) lines.push("(inga)");
+  lines.push("# Routines/checklists");
+  if (routines.length === 0) lines.push("(none)");
   for (const r of routines) {
     const days = r.days
       .slice()
       .sort()
-      .map((d) => WEEKDAYS[d].slice(0, 3).toLowerCase())
+      .map((d) => WEEKDAYS[d].slice(0, 3))
       .join(", ");
-    lines.push(`- [${r.id}] ${r.emoji} ${r.name} | ${days} kl ${r.time} | ${r.area} | ${r.items.map((i) => i.text).join(", ")}`);
+    lines.push(
+      `- [${r.id}] ${r.emoji} ${r.name} | ${days} at ${r.time} | ${AREA_NAME[r.area]} | ${r.items.map((i) => i.text).join(", ")}`,
+    );
   }
 
   if (settings.areas.includes("skola")) {
     const { school } = state;
     lines.push("");
-    lines.push(
-      `# Skolschema (packlista påminner ${school.packTime} kvällen innan och ${school.morningTime} på morgonen)`,
-    );
+    lines.push(`# School schedule (packing list reminds at ${school.packTime} the evening before and ${school.morningTime} in the morning)`);
     for (let d = 1; d <= 5; d++) {
-      const names = (school.schedule[d] ?? [])
-        .map((id) => school.subjects.find((s) => s.id === id)?.name)
-        .filter(Boolean);
-      lines.push(`- ${WEEKDAYS[d]}: ${names.join(", ") || "(inget)"}`);
+      const names = (school.schedule[d] ?? []).map((id) => school.subjects.find((s) => s.id === id)?.name).filter(Boolean);
+      lines.push(`- ${WEEKDAYS[d]}: ${names.join(", ") || "(nothing)"}`);
     }
-    lines.push("Ämnen och vad som ska med:");
-    for (const s of school.subjects) lines.push(`- ${s.name}: ${s.items.join(", ") || "(inget)"}`);
+    lines.push("Subjects and what to bring:");
+    for (const s of school.subjects) lines.push(`- ${s.name}: ${s.items.join(", ") || "(nothing)"}`);
   }
 
   return lines.join("\n");

@@ -16,12 +16,12 @@ function load(): AppState {
       return { ...base, ...parsed, settings: { ...base.settings, ...parsed.settings } };
     }
   } catch {
-    // trasig eller blockerad lagring, börja om
+    // broken or blocked storage, start over
   }
   return initialState();
 }
 
-/** Nästa förekomst för en upprepad påminnelse */
+/** Next occurrence for a repeating reminder */
 function nextOccurrence(r: Reminder): string | null {
   const due = new Date(r.due);
   const now = new Date();
@@ -65,7 +65,7 @@ interface Store {
   markListNotified: (nagKey: string) => void;
   snoozeList: (nagKey: string, minutes: number) => void;
   replaceState: (s: AppState) => void;
-  /** Senaste tillståndet direkt, utan att vänta på omrendering */
+  /** Latest state right away, without waiting for a re-render */
   getState: () => AppState;
 }
 
@@ -75,7 +75,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(initialState);
   const [ready, setReady] = useState(false);
   const loaded = useRef(false);
-  // Alltid senaste tillståndet, även innan React hunnit rendera om
+  // Always the latest state, even before React has re-rendered
   const stateRef = useRef<AppState>(state);
   const apply = useCallback((fn: (s: AppState) => AppState) => {
     const next = fn(stateRef.current);
@@ -127,7 +127,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       updateReminder: (id, patch) =>
         mapReminder(id, (r) => {
           const next = { ...r, ...patch };
-          // Ny tid = börja om tjatet
+          // New time = restart nagging
           if (patch.due && patch.due !== r.due) {
             next.nagCount = 0;
             next.lastNotifiedAt = undefined;
@@ -143,7 +143,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           }
           const next = nextOccurrence(r);
           if (next) {
-            // Upprepad: flytta fram till nästa gång
+            // Repeating: move to the next occurrence
             return { ...r, due: next, nagCount: 0, lastNotifiedAt: undefined, snoozedUntil: undefined };
           }
           return { ...r, done: true, doneAt: new Date().toISOString(), snoozedUntil: undefined };
@@ -205,11 +205,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
 export function useStore(): Store {
   const s = useContext(Ctx);
-  if (!s) throw new Error("useStore måste användas inom StoreProvider");
+  if (!s) throw new Error("useStore must be used inside StoreProvider");
   return s;
 }
 
-/** Klocka som tickar så att vyer uppdateras */
+/** Ticking clock so views refresh */
 export function useNow(intervalMs = 30000): Date {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {

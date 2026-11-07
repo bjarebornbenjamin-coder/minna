@@ -1,37 +1,41 @@
 import type { ToolDef } from "./chat-types";
 
-const AREA = { type: "string", enum: ["privat", "jobb", "skola"], description: "Vilket område saken hör till" } as const;
+const AREA = {
+  type: "string",
+  enum: ["personal", "work", "school"],
+  description: "Which area of the user's life this belongs to",
+} as const;
 const NAG = {
   type: "string",
-  enum: ["av", "mild", "normal", "mamma"],
+  enum: ["off", "gentle", "normal", "mom"],
   description:
-    "Tjat-nivå. av = ingen notis, mild = en notis, normal = påminner igen tills klart (standard), mamma = tjatar var 10:e minut. Använd mamma för saker som absolut inte får glömmas.",
+    "Nag level. off = no notification, gentle = one notification, normal = keeps reminding until done (default), mom = nags every 10 minutes. Use mom for things that absolutely must not be forgotten.",
 } as const;
 const REPEAT = {
   type: "string",
-  enum: ["ingen", "dagligen", "vardagar", "veckovis"],
-  description: "Upprepning, standard ingen",
+  enum: ["none", "daily", "weekdays", "weekly"],
+  description: "Repeat rule, default none",
 } as const;
 const LOCAL_TIME = {
   type: "string",
-  description: "Lokal tid i formatet YYYY-MM-DDTHH:mm, t.ex. 2026-11-12T07:30",
+  description: "Local date and time in the format YYYY-MM-DDTHH:mm (24-hour), e.g. 2026-11-12T18:00",
 } as const;
 
-/** Verktyg som assistenten kan använda. De körs i webbläsaren, där användarens data finns. */
+/** Tools the assistant can use. They run in the browser, where the user's data lives. */
 export const ASSISTANT_TOOLS: ToolDef[] = [
   {
     name: "create_reminder",
     description:
-      "Skapar en påminnelse som ger notis vid angiven tid. Använd för allt användaren vill komma ihåg: saker att göra, ta med, deadlines, möten, samtal. Anropa en gång per sak; flera anrop i samma svar går bra.",
+      "Creates a reminder that notifies the user at the given time. Use for anything the user wants to remember: tasks, things to bring, deadlines, meetings, calls. Call once per item; several calls in the same response are fine.",
     parameters: {
       type: "object",
       properties: {
-        title: { type: "string", description: "Kort, konkret titel i imperativ, t.ex. 'Ta med engelskaboken'" },
+        title: { type: "string", description: "Short, concrete title in imperative form, e.g. 'Bring your English book'" },
         due: LOCAL_TIME,
         area: AREA,
         repeat: REPEAT,
         nag: NAG,
-        notes: { type: "string", description: "Valfri anteckning med detaljer" },
+        notes: { type: "string", description: "Optional note with details" },
       },
       required: ["title", "due", "area"],
       additionalProperties: false,
@@ -39,11 +43,11 @@ export const ASSISTANT_TOOLS: ToolDef[] = [
   },
   {
     name: "update_reminder",
-    description: "Ändrar en befintlig påminnelse (t.ex. flyttar tiden). Ange bara fälten som ska ändras.",
+    description: "Changes an existing reminder (e.g. moves the time). Only include the fields that change.",
     parameters: {
       type: "object",
       properties: {
-        id: { type: "string", description: "Påminnelsens id från kontexten" },
+        id: { type: "string", description: "The reminder's id from the context" },
         title: { type: "string" },
         due: LOCAL_TIME,
         area: AREA,
@@ -57,7 +61,7 @@ export const ASSISTANT_TOOLS: ToolDef[] = [
   },
   {
     name: "complete_reminder",
-    description: "Markerar en påminnelse som klar (upprepade flyttas till nästa gång). Använd när användaren säger att något är gjort.",
+    description: "Marks a reminder as done (repeating ones move to their next time). Use when the user says something is done.",
     parameters: {
       type: "object",
       properties: { id: { type: "string" } },
@@ -67,7 +71,7 @@ export const ASSISTANT_TOOLS: ToolDef[] = [
   },
   {
     name: "delete_reminder",
-    description: "Tar bort en påminnelse permanent. Använd bara när användaren uttryckligen ber om att ta bort den.",
+    description: "Permanently deletes a reminder. Only use when the user explicitly asks to remove it.",
     parameters: {
       type: "object",
       properties: { id: { type: "string" } },
@@ -78,20 +82,20 @@ export const ASSISTANT_TOOLS: ToolDef[] = [
   {
     name: "create_routine",
     description:
-      "Skapar en återkommande checklista (rutin) som dyker upp vissa veckodagar vid en viss tid och tjatar tills allt är avbockat, t.ex. 'Packa gymväskan' eller 'Innan du går hemifrån'.",
+      "Creates a recurring checklist (routine) that appears on certain weekdays at a set time and nags until everything is checked off, e.g. 'Pack your gym bag' or 'Before you leave home'.",
     parameters: {
       type: "object",
       properties: {
         name: { type: "string" },
-        emoji: { type: "string", description: "En passande emoji" },
+        emoji: { type: "string", description: "A fitting emoji" },
         area: AREA,
-        time: { type: "string", description: "Tid HH:mm när listan ska påminna" },
+        time: { type: "string", description: "Time HH:mm (24-hour) when the list should remind" },
         days: {
           type: "array",
           items: { type: "integer", minimum: 0, maximum: 6 },
-          description: "Veckodagar: 0 = söndag, 1 = måndag ... 6 = lördag",
+          description: "Weekdays: 0 = Sunday, 1 = Monday ... 6 = Saturday",
         },
-        items: { type: "array", items: { type: "string" }, description: "Sakerna på listan" },
+        items: { type: "array", items: { type: "string" }, description: "The items on the list" },
         nag: NAG,
       },
       required: ["name", "area", "time", "days", "items"],
@@ -100,11 +104,11 @@ export const ASSISTANT_TOOLS: ToolDef[] = [
   },
   {
     name: "add_routine_items",
-    description: "Lägger till saker i en befintlig rutin/checklista.",
+    description: "Adds items to an existing routine/checklist.",
     parameters: {
       type: "object",
       properties: {
-        id: { type: "string", description: "Rutinens id från kontexten" },
+        id: { type: "string", description: "The routine's id from the context" },
         items: { type: "array", items: { type: "string" } },
       },
       required: ["id", "items"],
@@ -114,11 +118,11 @@ export const ASSISTANT_TOOLS: ToolDef[] = [
   {
     name: "set_subject_items",
     description:
-      "Skolschema: anger vad som ska med till ett ämne (ersätter listan). Skapar ämnet om det inte finns. Används för packlistorna kvällen innan.",
+      "School schedule: sets what to bring for a subject (replaces the list). Creates the subject if it doesn't exist. Used for the packing list the evening before.",
     parameters: {
       type: "object",
       properties: {
-        subject: { type: "string", description: "Ämnets namn, t.ex. 'Engelska'" },
+        subject: { type: "string", description: "The subject's name, e.g. 'English'" },
         items: { type: "array", items: { type: "string" } },
       },
       required: ["subject", "items"],
@@ -127,21 +131,21 @@ export const ASSISTANT_TOOLS: ToolDef[] = [
   },
 ];
 
-export const SYSTEM_PROMPT = `Du är Minna, en personlig assistent i en app som hjälper användaren att komma ihåg saker, privat, på jobbet och i skolan. Appen påminner med notiser och "tjatar" tills saker är avbockade.
+export const SYSTEM_PROMPT = `You are Minna, a personal assistant inside an app that helps the user remember things in their personal life, at work and at school. The app sends notifications and keeps nagging until things are checked off.
 
-Så arbetar du:
-- När användaren nämner något att komma ihåg, en deadline, ett prov, ett möte eller något att ta med: skapa påminnelser direkt med verktygen. Fråga bara om något är så oklart att du inte kan välja en rimlig tid.
-- Välj rimliga tider själv: bara ett datum → 08:00 den dagen (eller 07:00 för saker att ta med till skolan/jobbet). "Ikväll" → 19:00. "Efter skolan/jobbet" → 16:00 respektive 17:30.
-- Deadlines och prov: skapa en påminnelse för själva tillfället och en eller flera förberedande (t.ex. plugga dagen innan, börja med uppgiften några dagar innan).
-- Saker att ta med: lägg påminnelsen kvällen innan (cirka 20:00) och använd tjat-nivå mamma.
-- Välj område (privat/jobb/skola) utifrån sammanhanget bland användarens aktiva områden.
-- Om användaren räknar upp många saker på en gång, skapa en påminnelse per sak i samma svar.
-- Återkommande saker med flera delar (t.ex. packa gymväskan varje måndag) passar bättre som rutin.
-- Ändra, bocka av eller ta bort befintliga saker med deras id från kontexten. Ta bara bort när användaren ber om det.
-- Gör aldrig anspråk på att ha gjort något du inte gjort med ett verktyg.
-- Kalender och mejl är inte kopplade än. Om användaren ber om det, säg att det kommer snart och erbjud en påminnelse i stället.
+How you work:
+- When the user mentions something to remember, a deadline, an exam, a meeting or something to bring: create reminders right away with the tools. Only ask if something is so unclear that you can't pick a reasonable time.
+- Pick sensible times yourself: date only → 8:00 AM that day (7:00 AM for things to bring to school or work). "Tonight" → 7:00 PM. "After school/work" → 4:00 PM and 5:30 PM respectively.
+- Deadlines and exams: create one reminder for the event itself and one or more preparatory ones (e.g. study the day before, start the assignment a few days earlier).
+- Things to bring: set the reminder the evening before (around 8:00 PM) with nag level mom.
+- Choose the area (personal/work/school) from context, among the user's active areas.
+- If the user lists many things at once, create one reminder per item in the same response.
+- Recurring things with several parts (e.g. pack the gym bag every Monday) work better as a routine.
+- Change, complete or delete existing items using their id from the context. Only delete when the user asks.
+- Never claim to have done something you didn't do with a tool.
+- Calendar and email aren't connected yet. If the user asks for that, say it's coming soon and offer a reminder instead.
 
-Stil:
-- Svara på svenska, kort och vardagligt, som en omtänksam assistent. Följ användarens valda ton.
-- Efter att du använt verktyg: bekräfta kort vad du lagt in, med dag och tid, utan att upprepa varje detalj. Appen visar redan en lista över det du gjort.
-- Skriv vanlig text utan markdown-rubriker. Korta punktlistor med "- " går bra.`;
+Style:
+- Reply in English, short and conversational, like a caring assistant. Follow the user's chosen tone.
+- After using tools: briefly confirm what you added, with day and time, without repeating every detail. The app already shows a list of what you did.
+- Write plain text without markdown headings. Short bullet lists with "- " are fine.`;

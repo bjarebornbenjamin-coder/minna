@@ -2,17 +2,17 @@ import { addDays, atTime, dayKey, WEEKDAYS } from "./dates";
 import type { AppState, AreaId, ChecklistItem, NagLevel } from "./types";
 
 export interface ChecklistInstance {
-  /** Nyckel för avbockningar: `${listId}:${YYYY-MM-DD}` */
+  /** Key for check-offs: `${listId}:${YYYY-MM-DD}` */
   checksKey: string;
   listId: string;
   name: string;
   emoji: string;
   area: AreaId;
   items: ChecklistItem[];
-  /** Tillfällen då listan ska påminna */
+  /** Times when the list should remind */
   triggers: { nagKey: string; at: Date; label: string }[];
   nag: NagLevel;
-  /** Vilken dag listan gäller */
+  /** Which day the list is for */
   date: Date;
   editHref: string;
 }
@@ -21,7 +21,7 @@ export function slug(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9åäö]+/g, "-");
 }
 
-/** Packlista för skolan för en viss dag, eller null om inga lektioner */
+/** School packing list for a given day, or null if there are no classes */
 export function schoolPackFor(state: AppState, date: Date): ChecklistInstance | null {
   if (!state.settings.areas.includes("skola")) return null;
   const ids = state.school.schedule[date.getDay()] ?? [];
@@ -42,16 +42,16 @@ export function schoolPackFor(state: AppState, date: Date): ChecklistInstance | 
   return {
     checksKey: `skola-pack:${dk}`,
     listId: "skola-pack",
-    name: `Packa till ${WEEKDAYS[date.getDay()].toLowerCase()}`,
+    name: `Pack for ${WEEKDAYS[date.getDay()]}`,
     emoji: "🎒",
     area: "skola",
     items,
     nag: "normal",
     date,
-    editHref: "/schema",
+    editHref: "/school",
     triggers: [
-      { nagKey: `skola-pack-kvall:${dk}`, at: atTime(addDays(date, -1), state.school.packTime), label: "Packa väskan" },
-      { nagKey: `skola-pack-morgon:${dk}`, at: atTime(date, state.school.morningTime), label: "Har du allt med dig?" },
+      { nagKey: `skola-pack-kvall:${dk}`, at: atTime(addDays(date, -1), state.school.packTime), label: "Pack your bag" },
+      { nagKey: `skola-pack-morgon:${dk}`, at: atTime(date, state.school.morningTime), label: "Got everything with you?" },
     ],
   };
 }
@@ -69,13 +69,13 @@ export function routinesFor(state: AppState, date: Date): ChecklistInstance[] {
       items: r.items,
       nag: r.nag,
       date,
-      editHref: "/rutiner",
+      editHref: "/routines",
       triggers: [{ nagKey: `${r.id}:${dk}`, at: atTime(date, r.time), label: r.name }],
     }))
     .sort((a, b) => a.triggers[0].at.getTime() - b.triggers[0].at.getTime());
 }
 
-/** Alla checklistor som kan ha notiser som ska gå idag */
+/** All checklists that may have notifications due today */
 export function activeChecklists(state: AppState, now: Date): ChecklistInstance[] {
   const lists: ChecklistInstance[] = [...routinesFor(state, now)];
   const today = schoolPackFor(state, now);

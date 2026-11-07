@@ -17,26 +17,26 @@ function fail(error: string, message: string, status: number) {
 }
 
 export async function POST(req: Request) {
-  // OpenAI används om den nyckeln finns, annars Claude
+  // OpenAI is used if that key exists, otherwise Claude
   const provider = process.env.OPENAI_API_KEY ? "openai" : process.env.ANTHROPIC_API_KEY ? "anthropic" : null;
   if (!provider) {
-    return fail("missing_key", "Ingen API-nyckel på servern (OPENAI_API_KEY eller ANTHROPIC_API_KEY).", 503);
+    return fail("missing_key", "No API key on the server (OPENAI_API_KEY or ANTHROPIC_API_KEY).", 503);
   }
 
-  // Valfri åtkomstkod så att inte vem som helst med länken kan använda (och betala för) chatten
+  // Optional access code so not just anyone with the link can use (and pay for) the chat
   const code = process.env.MINNA_ACCESS_CODE;
   if (code && req.headers.get("x-minna-code") !== code) {
-    return fail("forbidden", "Fel eller saknad åtkomstkod.", 401);
+    return fail("forbidden", "Wrong or missing access code.", 401);
   }
 
   let body: ChatRequest;
   try {
     body = (await req.json()) as ChatRequest;
   } catch {
-    return fail("bad_request", "Ogiltig förfrågan.", 400);
+    return fail("bad_request", "Invalid request.", 400);
   }
   if (!Array.isArray(body.messages) || body.messages.length === 0 || typeof body.context !== "string") {
-    return fail("bad_request", "Ogiltig förfrågan.", 400);
+    return fail("bad_request", "Invalid request.", 400);
   }
 
   try {
@@ -47,42 +47,42 @@ export async function POST(req: Request) {
     return Response.json(result);
   } catch (error) {
     // OpenAI-fel
-    if (error instanceof OpenAI.AuthenticationError) return fail("auth", "OpenAI-nyckeln är ogiltig.", 502);
+    if (error instanceof OpenAI.AuthenticationError) return fail("auth", "The OpenAI key is invalid.", 502);
     if (error instanceof OpenAI.RateLimitError) {
       if (error.code === "insufficient_quota") {
         return fail(
           "quota",
-          "OpenAI-kontot saknar krediter. Fyll på under Billing på platform.openai.com.",
+          "Your OpenAI account is out of credits. Add some under Billing at platform.openai.com.",
           402,
         );
       }
-      return fail("rate_limit", "För många förfrågningar just nu, försök igen om en stund.", 429);
+      return fail("rate_limit", "Too many requests right now, try again in a moment.", 429);
     }
     if (error instanceof OpenAI.NotFoundError) {
-      return fail("model", "Modellen finns inte för ditt konto. Byt OPENAI_MODEL.", 502);
+      return fail("model", "That model isn't available for your account. Change OPENAI_MODEL.", 502);
     }
     if (error instanceof OpenAI.BadRequestError) {
       console.error("OpenAI bad request:", error.message);
-      return fail("bad_request", "Konversationen kunde inte skickas. Testa att starta en ny chatt.", 400);
+      return fail("bad_request", "The conversation couldn't be sent. Try starting a new chat.", 400);
     }
     if (error instanceof OpenAI.APIError) {
       console.error(`OpenAI API error ${error.status}:`, error.message);
-      return fail("api", "OpenAI svarar inte just nu. Försök igen.", 502);
+      return fail("api", "OpenAI isn't responding right now. Try again.", 502);
     }
     // Claude-fel
-    if (error instanceof Anthropic.AuthenticationError) return fail("auth", "Claude-nyckeln är ogiltig.", 502);
+    if (error instanceof Anthropic.AuthenticationError) return fail("auth", "The Claude key is invalid.", 502);
     if (error instanceof Anthropic.RateLimitError) {
-      return fail("rate_limit", "För många förfrågningar just nu, försök igen om en stund.", 429);
+      return fail("rate_limit", "Too many requests right now, try again in a moment.", 429);
     }
     if (error instanceof Anthropic.BadRequestError) {
       console.error("Claude bad request:", error.message);
-      return fail("bad_request", "Konversationen kunde inte skickas. Testa att starta en ny chatt.", 400);
+      return fail("bad_request", "The conversation couldn't be sent. Try starting a new chat.", 400);
     }
     if (error instanceof Anthropic.APIError) {
       console.error(`Claude API error ${error.status}:`, error.message);
-      return fail("api", "Claude svarar inte just nu. Försök igen.", 502);
+      return fail("api", "Claude isn't responding right now. Try again.", 502);
     }
     console.error(error);
-    return fail("unknown", "Något gick fel.", 500);
+    return fail("unknown", "Something went wrong.", 500);
   }
 }

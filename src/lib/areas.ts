@@ -1,47 +1,50 @@
 import type { AreaId, NagLevel, Repeat, Tone } from "./types";
 
-export const AREAS: Record<AreaId, { label: string; emoji: string; dot: string; chip: string; ring: string }> = {
+export const AREAS: Record<AreaId, { label: string; emoji: string; dot: string; chip: string; ring: string; glow: string }> = {
   privat: {
-    label: "Privat",
+    label: "Personal",
     emoji: "🏠",
-    dot: "bg-emerald-500",
-    chip: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200",
-    ring: "ring-emerald-500",
+    dot: "bg-emerald-400",
+    chip: "bg-emerald-400/10 text-emerald-300 ring-1 ring-emerald-400/20",
+    ring: "ring-emerald-400/60",
+    glow: "shadow-[0_0_24px_-6px_rgba(52,211,153,0.6)]",
   },
   jobb: {
-    label: "Jobb",
+    label: "Work",
     emoji: "💼",
-    dot: "bg-sky-500",
-    chip: "bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-200",
-    ring: "ring-sky-500",
+    dot: "bg-sky-400",
+    chip: "bg-sky-400/10 text-sky-300 ring-1 ring-sky-400/20",
+    ring: "ring-sky-400/60",
+    glow: "shadow-[0_0_24px_-6px_rgba(56,189,248,0.6)]",
   },
   skola: {
-    label: "Skola",
+    label: "School",
     emoji: "🎒",
-    dot: "bg-amber-500",
-    chip: "bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200",
-    ring: "ring-amber-500",
+    dot: "bg-amber-400",
+    chip: "bg-amber-400/10 text-amber-300 ring-1 ring-amber-400/20",
+    ring: "ring-amber-400/60",
+    glow: "shadow-[0_0_24px_-6px_rgba(251,191,36,0.6)]",
   },
 };
 
 export const AREA_IDS: AreaId[] = ["privat", "jobb", "skola"];
 
 export const NAG_LEVELS: Record<NagLevel, { label: string; desc: string }> = {
-  av: { label: "Av", desc: "Bara i listan, ingen notis" },
-  mild: { label: "Mild", desc: "En påminnelse" },
-  normal: { label: "Normal", desc: "Påminner igen efter 15 min och sedan varje timme" },
-  mamma: { label: "Mamma-läge", desc: "Tjatar var 10:e minut tills det är gjort" },
+  av: { label: "Off", desc: "Shows in your list, no notification" },
+  mild: { label: "Gentle", desc: "One notification" },
+  normal: { label: "Normal", desc: "Reminds again after 15 min, then every hour" },
+  mamma: { label: "Mom mode", desc: "Nags every 10 minutes until it's done" },
 };
 
 export const REPEATS: Record<Repeat, string> = {
-  ingen: "Ingen upprepning",
-  dagligen: "Varje dag",
-  vardagar: "Vardagar",
-  veckovis: "Varje vecka",
+  ingen: "Doesn't repeat",
+  dagligen: "Every day",
+  vardagar: "Weekdays",
+  veckovis: "Every week",
 };
 
 export const TONES: Record<Tone, { label: string; example: string }> = {
-  varm: { label: "Varm", example: "Glöm inte gympapåsen 💛" },
-  saklig: { label: "Saklig", example: "Påminnelse: gympapåse." },
-  rolig: { label: "Rolig", example: "Gympapåsen ringde. Den vill följa med. 🎒" },
+  varm: { label: "Warm", example: "Don't forget your gym bag 💜" },
+  saklig: { label: "Direct", example: "Reminder: gym bag." },
+  rolig: { label: "Playful", example: "Your gym bag called. It wants to come along. 🎒" },
 };

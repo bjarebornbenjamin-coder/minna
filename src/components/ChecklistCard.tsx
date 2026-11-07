@@ -20,23 +20,23 @@ export function ChecklistCard({ list, subtitle }: { list: ChecklistInstance; sub
         <div className="flex-1 min-w-0">
           <p className="font-semibold leading-tight">{list.name}</p>
           <p className="text-xs text-zinc-500">
-            {subtitle ?? `kl ${formatTime(list.triggers[0].at)}`}
+            {subtitle ?? `at ${formatTime(list.triggers[0].at)}`}
             {state.settings.areas.length > 1 && ` · ${AREAS[list.area].emoji} ${AREAS[list.area].label}`}
           </p>
         </div>
         <span
           className={`chip ${
             complete
-              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200"
-              : "bg-zinc-100 dark:bg-zinc-800"
+              ? "bg-emerald-400/10 text-emerald-300 ring-1 ring-emerald-400/30"
+              : "bg-white/[0.06] text-zinc-300"
           }`}
         >
-          {complete ? "✓ Klart" : `${done}/${total}`}
+          {complete ? "✓ Done" : `${done}/${total}`}
         </span>
       </div>
-      <div className="h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden mb-3">
+      <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden mb-3">
         <div
-          className={`h-full rounded-full transition-all ${complete ? "bg-emerald-500" : AREAS[list.area].dot}`}
+          className={`h-full rounded-full transition-all duration-500 ${complete ? "bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.9)]" : "bg-gradient-to-r from-violet-500 to-cyan-400 shadow-[0_0_12px_rgba(139,92,246,0.8)]"}`}
           style={{ width: `${(done / total) * 100}%` }}
         />
       </div>
@@ -48,11 +48,11 @@ export function ChecklistCard({ list, subtitle }: { list: ChecklistInstance; sub
               <label className="flex items-center gap-3 py-1.5 cursor-pointer select-none">
                 <input
                   type="checkbox"
-                  className="h-5 w-5 accent-violet-600"
+                  className="h-5 w-5 accent-violet-500"
                   checked={on}
                   onChange={() => toggleCheck(list.checksKey, item.id)}
                 />
-                <span className={on ? "line-through text-zinc-400" : ""}>{item.text}</span>
+                <span className={on ? "line-through text-zinc-500" : "text-zinc-200"}>{item.text}</span>
               </label>
             </li>
           );
@@ -60,7 +60,7 @@ export function ChecklistCard({ list, subtitle }: { list: ChecklistInstance; sub
       </ul>
       <div className="text-right">
         <Link href={list.editHref} className="btn-ghost text-xs">
-          Redigera
+          Edit
         </Link>
       </div>
     </div>

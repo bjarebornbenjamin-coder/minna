@@ -13,7 +13,7 @@ export function AreaFilter({ value, onChange }: { value: AreaFilterValue; onChan
   return (
     <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
       <button className={`seg ${value === "alla" ? "seg-on" : ""}`} onClick={() => onChange("alla")}>
-        Alla
+        All
       </button>
       {areas.map((a) => (
         <button key={a} className={`seg whitespace-nowrap ${value === a ? "seg-on" : ""}`} onClick={() => onChange(a)}>

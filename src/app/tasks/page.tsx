@@ -25,33 +25,33 @@ export default function RemindersPage() {
   const tomorrow = addDays(now, 1);
   const weekEnd = addDays(startOfDay(now), 7);
   const groups: { title: string; items: Reminder[] }[] = [
-    { title: "Försenat", items: active.filter((r) => new Date(r.due) <= now) },
-    { title: "Idag", items: active.filter((r) => new Date(r.due) > now && isSameDay(new Date(r.due), now)) },
-    { title: "Imorgon", items: active.filter((r) => isSameDay(new Date(r.due), tomorrow)) },
+    { title: "Overdue", items: active.filter((r) => new Date(r.due) <= now) },
+    { title: "Today", items: active.filter((r) => new Date(r.due) > now && isSameDay(new Date(r.due), now)) },
+    { title: "Tomorrow", items: active.filter((r) => isSameDay(new Date(r.due), tomorrow)) },
     {
-      title: "Närmaste veckan",
+      title: "This week",
       items: active.filter((r) => new Date(r.due) >= addDays(startOfDay(now), 2) && new Date(r.due) < weekEnd),
     },
-    { title: "Senare", items: active.filter((r) => new Date(r.due) >= weekEnd) },
+    { title: "Later", items: active.filter((r) => new Date(r.due) >= weekEnd) },
   ];
 
   return (
     <div>
-      <h1 className="text-2xl font-bold tracking-tight mb-4">Påminnelser</h1>
+      <h1 className="font-display text-3xl font-semibold tracking-tight mb-5">Tasks</h1>
       <div className="card mb-4">
         <ReminderForm compact defaultArea={filter === "alla" ? undefined : filter} onSubmit={addReminder} />
       </div>
       <AreaFilter value={filter} onChange={setFilter} />
 
       {active.length === 0 && (
-        <p className="text-center text-zinc-500 py-12">Inga aktiva påminnelser. Lägg till en ovan! 👆</p>
+        <p className="text-center text-zinc-500 py-12">No active reminders. Add one above 👆</p>
       )}
 
       {groups
         .filter((g) => g.items.length > 0)
         .map((g) => (
           <section key={g.title}>
-            <h2 className={`section-title ${g.title === "Försenat" ? "text-rose-600 dark:text-rose-400" : ""}`}>
+            <h2 className={`section-title ${g.title === "Overdue" ? "!text-rose-300" : ""}`}>
               {g.title} ({g.items.length})
             </h2>
             <ul className="flex flex-col gap-2">
@@ -64,8 +64,8 @@ export default function RemindersPage() {
 
       {done.length > 0 && (
         <section>
-          <button className="section-title hover:text-zinc-800 dark:hover:text-zinc-200" onClick={() => setShowDone((s) => !s)}>
-            {showDone ? "▾" : "▸"} Klara ({done.length})
+          <button className="section-title hover:text-zinc-200" onClick={() => setShowDone((s) => !s)}>
+            {showDone ? "▾" : "▸"} Completed ({done.length})
           </button>
           {showDone && (
             <ul className="flex flex-col gap-2">

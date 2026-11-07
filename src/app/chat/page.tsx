@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { AssistantMessage, ChatMessage, ToolResultMessage, TurnResult } from "@/lib/assistant/chat-types";
+import { CoreView, type CoreState } from "@/components/core/CoreView";
 import { buildContext } from "@/lib/assistant/context";
 import { executeTool, type ChatAction } from "@/lib/assistant/execute";
 import { useStore } from "@/lib/store";
 
 interface ChatState {
   messages: ChatMessage[];
-  /** verktygsanropets id -> vad som hände */
+  /** tool call id -> what happened */
   actions: Record<string, ChatAction>;
 }
 
@@ -20,7 +21,7 @@ function loadChat(): ChatState {
     const raw = localStorage.getItem(CHAT_KEY);
     if (raw) return JSON.parse(raw) as ChatState;
   } catch {
-    // ignorera
+    // ignore
   }
   return { messages: [], actions: {} };
 }
@@ -29,17 +30,17 @@ function saveChat(c: ChatState) {
   try {
     localStorage.setItem(CHAT_KEY, JSON.stringify(c));
   } catch {
-    // full lagring
+    // storage full
   }
 }
 
 const SUGGESTIONS: Record<string, string[]> = {
-  skola: ["Jag har kemiprov på torsdag", "Imorgon har vi idrott, påminn mig om gympakläderna"],
-  jobb: ["Jag lovade skicka offerten till Erik på fredag", "Påminn mig att förbereda mötet med Anna imorgon kl 10"],
-  privat: ["Ring tandläkaren imorgon förmiddag", "Gör en packlista för gymmet måndagar och torsdagar"],
+  skola: ["I have a chemistry exam on Thursday", "We have PE tomorrow, remind me about my gym clothes"],
+  jobb: ["I promised to send Eric the quote on Friday", "Remind me to prep for my meeting with Anna tomorrow at 10"],
+  privat: ["Call the dentist tomorrow morning", "Make a gym packing list for Mondays and Thursdays"],
 };
 
-/* ---------- Röstinmatning (Web Speech API) ---------- */
+/* ---------- Voice input (Web Speech API) ---------- */
 interface SpeechRec {
   lang: string;
   interimResults: boolean;
@@ -68,6 +69,13 @@ export default function ChatPage() {
   const [error, setError] = useState<{ message: string; code?: string } | null>(null);
   const [listening, setListening] = useState(false);
   const [speechOk, setSpeechOk] = useState(false);
+  const [phase, setPhase] = useState<CoreState>("idle");
+  const phaseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flash = (p: CoreState, ms = 1600) => {
+    if (phaseTimer.current) clearTimeout(phaseTimer.current);
+    setPhase(p);
+    phaseTimer.current = setTimeout(() => setPhase("idle"), ms);
+  };
   const recRef = useRef<SpeechRec | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -93,6 +101,9 @@ export default function ChatPage() {
     setError(null);
     setInput("");
     setBusy(true);
+    if (phaseTimer.current) clearTimeout(phaseTimer.current);
+    setPhase("thinking");
+    let didSomething = false;
 
     let state: ChatState = {
       messages: [...chat.messages, { role: "user", text: trimmed }],
@@ -115,26 +126,34 @@ export default function ChatPage() {
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-          // Inget svar från Claude: ta bort användarens meddelande om vi inte hunnit längre, så att det kan skickas igen
+          // No answer: remove the user's message if we got no further, so it can be sent again
           if (state.messages.length === startLength + 1) {
             state = { ...state, messages: state.messages.slice(0, startLength) };
             update(state);
             setInput(trimmed);
           }
-          setError({ message: data.message ?? "Något gick fel.", code: data.error });
+          setError({ message: data.message ?? "Something went wrong.", code: data.error });
+          flash("error", 2500);
           return;
         }
 
         const turn = data as TurnResult;
-        // Svaret sparas oförändrat så att det kan skickas tillbaka nästa gång
+        // The reply is stored unchanged so it can be sent back next time
         state = { ...state, messages: [...state.messages, turn.message] };
         update(state);
 
         if (turn.stop === "refusal") {
-          setError({ message: "Det där kan jag tyvärr inte hjälpa till med." });
+          setError({ message: "Sorry, I can't help with that." });
+          flash("error", 2500);
           return;
         }
-        if (turn.stop !== "tool_use" || turn.message.toolCalls.length === 0) return;
+        if (turn.stop !== "tool_use" || turn.message.toolCalls.length === 0) {
+          if (didSomething) flash("complete");
+          else setPhase("idle");
+          return;
+        }
+        setPhase("executing");
+        didSomething = true;
 
         const results: ToolResultMessage["results"] = [];
         const actions = { ...state.actions };
@@ -143,12 +162,14 @@ export default function ChatPage() {
           results.push({ id: call.id, content: outcome.content, ...(outcome.isError && { isError: true }) });
           if (outcome.action) actions[call.id] = outcome.action;
         }
-        // Alla resultat i ett och samma meddelande
+        // All results in one message
         state = { messages: [...state.messages, { role: "tool", results }], actions };
         update(state);
+        setPhase("thinking");
       }
     } catch {
-      setError({ message: "Kunde inte nå servern. Är du uppkopplad?" });
+      setError({ message: "Couldn't reach the server. Are you online?" });
+      flash("error", 2500);
     } finally {
       setBusy(false);
       inputRef.current?.focus();
@@ -171,7 +192,7 @@ export default function ChatPage() {
       return;
     }
     const rec = new SR();
-    rec.lang = "sv-SE";
+    rec.lang = "en-US";
     rec.interimResults = true;
     rec.continuous = false;
     const base = input ? input.trimEnd() + " " : "";
@@ -180,10 +201,17 @@ export default function ChatPage() {
       for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
       setInput(base + t);
     };
-    rec.onend = () => setListening(false);
-    rec.onerror = () => setListening(false);
+    rec.onend = () => {
+      setListening(false);
+      setPhase((p) => (p === "listening" ? "idle" : p));
+    };
+    rec.onerror = () => {
+      setListening(false);
+      setPhase((p) => (p === "listening" ? "idle" : p));
+    };
     recRef.current = rec;
     setListening(true);
+    setPhase("listening");
     rec.start();
   };
 
@@ -196,32 +224,35 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col min-h-[calc(100dvh-8rem)] md:min-h-[calc(100dvh-4rem)]">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold tracking-tight">Chatta med Minna</h1>
+        <h1 className="font-display text-3xl font-semibold tracking-tight">Chat</h1>
         {chat.messages.length > 0 && (
           <button
             className="btn-ghost"
             disabled={busy}
             onClick={() => {
-              if (confirm("Starta en ny chatt? Påminnelserna finns kvar.")) update({ messages: [], actions: {} });
+              if (confirm("Start a new chat? Your reminders stay.")) update({ messages: [], actions: {} });
             }}
           >
-            Ny chatt
+            New chat
           </button>
         )}
       </div>
 
+      <div className="flex justify-center -mt-4 -mb-2">
+        <CoreView size={chat.messages.length === 0 ? 220 : 130} state={phase} className="transition-all duration-500" />
+      </div>
+
       <div className="flex-1 flex flex-col gap-3">
         {chat.messages.length === 0 && (
-          <div className="text-center py-8">
-            <div className="text-5xl mb-3">💬</div>
-            <p className="font-medium">{name ? `Hej ${name}! ` : "Hej! "}Vad ska jag hålla koll på?</p>
-            <p className="text-sm text-zinc-500 mt-1 max-w-sm mx-auto">
-              Skriv som till en person. Jag lägger in påminnelser och checklistor åt dig. Du kan räkna upp flera saker på
-              en gång.
+          <div className="text-center py-2 animate-fadeup">
+            <p className="font-display text-2xl font-semibold">{name ? `Hi ${name}. ` : "Hi. "}What should I keep track of?</p>
+            <p className="text-sm text-zinc-400 mt-2 max-w-sm mx-auto">
+              Write like you would to a person. I&apos;ll add reminders and checklists for you. You can list several things
+              at once.
             </p>
             <div className="flex flex-col gap-2 mt-6 max-w-sm mx-auto">
               {suggestions.map((s) => (
-                <button key={s} className="card py-2.5 text-sm text-left hover:border-violet-300 dark:hover:border-violet-800" onClick={() => send(s)}>
+                <button key={s} className="card py-2.5 text-sm text-left text-zinc-200 hover:!border-violet-400/30" onClick={() => send(s)}>
                   {s}
                 </button>
               ))}
@@ -234,32 +265,29 @@ export default function ChatPage() {
         ))}
 
         {busy && (
-          <div className="flex gap-1.5 px-4 py-3 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 w-fit">
-            <span className="h-2 w-2 rounded-full bg-zinc-400 animate-bounce" />
-            <span className="h-2 w-2 rounded-full bg-zinc-400 animate-bounce [animation-delay:150ms]" />
-            <span className="h-2 w-2 rounded-full bg-zinc-400 animate-bounce [animation-delay:300ms]" />
+          <div className="flex items-center gap-2 text-sm text-zinc-400 px-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 animate-ping" />
+            {phase === "executing" ? "Working on it…" : "Thinking…"}
           </div>
         )}
 
         {error && (
-          <div className="card border-rose-300 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/30 text-sm">
-            <p className="font-medium text-rose-700 dark:text-rose-300">{error.message}</p>
+          <div className="card !border-rose-400/30 !bg-rose-500/[0.07] text-sm">
+            <p className="font-medium text-rose-200">{error.message}</p>
             {error.code === "missing_key" && (
-              <p className="text-zinc-600 dark:text-zinc-400 mt-1">
-                Lägg in din OpenAI-nyckel som miljövariabeln OPENAI_API_KEY (i Vercel: Settings → Environment Variables) och
-                publicera om.
+              <p className="text-zinc-400 mt-1">
+                Add your OpenAI key as the environment variable OPENAI_API_KEY (in Vercel: Settings → Environment Variables)
+                and redeploy.
               </p>
             )}
-            {error.code === "forbidden" && (
-              <p className="text-zinc-600 dark:text-zinc-400 mt-1">Ange åtkomstkoden under Inställningar → Chatt.</p>
-            )}
+            {error.code === "forbidden" && <p className="text-zinc-400 mt-1">Enter the access code under Settings → Chat.</p>}
           </div>
         )}
         <div ref={bottomRef} />
       </div>
 
       <form
-        className="sticky bottom-20 md:bottom-4 mt-4 flex items-end gap-2 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-2 shadow-lg"
+        className="sticky bottom-24 md:bottom-4 mt-4 flex items-end gap-2 rounded-3xl border border-white/10 bg-[#0d1022]/85 backdrop-blur-xl p-2 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.9)] focus-within:border-violet-400/40 focus-within:shadow-[0_0_40px_-12px_rgba(139,92,246,0.8)] transition"
         onSubmit={(e) => {
           e.preventDefault();
           send(input);
@@ -267,9 +295,9 @@ export default function ChatPage() {
       >
         <textarea
           ref={inputRef}
-          className="flex-1 resize-none bg-transparent outline-none px-2 py-2 text-base sm:text-sm max-h-40"
+          className="flex-1 resize-none bg-transparent outline-none px-2 py-2 text-base sm:text-sm max-h-40 placeholder:text-zinc-500"
           rows={1}
-          placeholder={listening ? "Jag lyssnar…" : "Skriv till Minna…"}
+          placeholder={listening ? "Listening…" : "Message Minna…"}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
@@ -278,22 +306,22 @@ export default function ChatPage() {
               send(input);
             }
           }}
-          aria-label="Meddelande"
+          aria-label="Message"
         />
         {speechOk && (
           <button
             type="button"
             onClick={toggleMic}
             className={`h-10 w-10 shrink-0 rounded-xl grid place-items-center transition ${
-              listening ? "bg-rose-500 text-white animate-pulse" : "bg-zinc-100 dark:bg-zinc-800"
+              listening ? "bg-rose-500/80 text-white animate-pulse" : "bg-white/[0.06] hover:bg-white/[0.1]"
             }`}
-            aria-label={listening ? "Sluta lyssna" : "Prata"}
+            aria-label={listening ? "Stop listening" : "Speak"}
           >
             🎤
           </button>
         )}
         <button className="btn-primary h-10 shrink-0" disabled={busy || !input.trim()}>
-          Skicka
+          Send
         </button>
       </form>
     </div>
@@ -311,20 +339,20 @@ function MessageView({
 }) {
   if (msg.role === "user") {
     return (
-      <div className="self-end max-w-[85%] rounded-2xl rounded-br-md bg-violet-600 text-white px-4 py-2.5 whitespace-pre-wrap">
+      <div className="self-end max-w-[85%] rounded-3xl rounded-br-lg bg-gradient-to-br from-violet-600 to-indigo-600 text-white px-4 py-2.5 whitespace-pre-wrap shadow-[0_8px_30px_-10px_rgba(124,58,237,0.8)] animate-fadeup">
         {msg.text}
       </div>
     );
   }
-  if (msg.role === "tool") return null; // resultat visas som åtgärder under assistentens svar
+  if (msg.role === "tool") return null; // results are shown as actions under the assistant's reply
 
   const m: AssistantMessage = msg;
   const text = m.text.trim();
 
   return (
-    <div className="self-start max-w-[90%] flex flex-col gap-2">
+    <div className="self-start max-w-[90%] flex flex-col gap-2 animate-fadeup">
       {text && (
-        <div className="rounded-2xl rounded-bl-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-4 py-2.5 whitespace-pre-wrap">
+        <div className="rounded-3xl rounded-bl-lg border border-white/10 bg-white/[0.05] backdrop-blur-xl px-4 py-2.5 whitespace-pre-wrap text-zinc-100">
           {text.replace(/\*\*(.+?)\*\*/g, "$1")}
         </div>
       )}
@@ -336,19 +364,19 @@ function MessageView({
             return (
               <li
                 key={t.id}
-                className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm ${
+                className={`flex items-center gap-2 rounded-2xl border px-3 py-2 text-sm ${
                   a.error
-                    ? "border-amber-300 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30"
+                    ? "border-amber-400/30 bg-amber-400/[0.07] text-amber-100"
                     : a.undone
-                      ? "border-zinc-200 dark:border-zinc-800 opacity-50 line-through"
-                      : "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/30"
+                      ? "border-white/10 opacity-40 line-through"
+                      : "border-cyan-300/20 bg-cyan-300/[0.06] text-cyan-50 shadow-[0_0_24px_-12px_rgba(34,211,238,0.9)]"
                 }`}
               >
                 <span>{a.icon}</span>
                 <span className="flex-1 min-w-0">{a.text}</span>
                 {a.undo && !a.undone && (
                   <button className="btn-ghost text-xs" onClick={() => onUndo(t.id)}>
-                    Ångra
+                    Undo
                   </button>
                 )}
               </li>

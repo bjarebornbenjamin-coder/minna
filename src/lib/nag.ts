@@ -1,16 +1,16 @@
 import { atTime, minutesBetween } from "./dates";
 import type { AreaId, NagLevel, Settings } from "./types";
 
-/** Minuter mellan tjat efter första notisen, per nivå */
+/** Minutes between nags after the first notification, per level */
 const INTERVALS: Record<Exclude<NagLevel, "av">, (count: number) => number | null> = {
-  mild: () => null, // bara en gång
+  mild: () => null, // only once
   normal: (count) => (count === 1 ? 15 : 60),
   mamma: () => 10,
 };
 
 /**
- * Räknar ut när nästa notis ska skickas, eller null om inga fler notiser ska gå.
- * `start` = när första notisen ska gå (förfallotid).
+ * Works out when the next notification should go out, or null if no more should.
+ * `start` = when the first notification should go out (due time).
  */
 export function nextNagAt(opts: {
   level: NagLevel;
@@ -36,7 +36,7 @@ export function nextNagAt(opts: {
 
   if (snoozedUntil) {
     const s = new Date(snoozedUntil);
-    // En snooze ger alltid en ny notis när den går ut, även på "mild"
+    // A snooze always gives a new notification when it runs out, even on "mild"
     if (!next || s > next) next = s;
   }
   return next;
@@ -48,16 +48,16 @@ export function isWithinWorkHours(settings: Settings, now: Date): boolean {
   return now >= atTime(now, start) && now < atTime(now, end);
 }
 
-/** Ska notiser för detta område hållas tillbaka just nu? */
+/** Should notifications for this area be held back right now? */
 export function isQuiet(area: AreaId, settings: Settings, now: Date): boolean {
   return area === "jobb" && settings.quietWorkOutsideHours && !isWithinWorkHours(settings, now);
 }
 
-/** Kort förklaring av när påminnelsen tjatar nästa gång (för UI) */
+/** Short description of when the reminder nags next (for the UI) */
 export function describeNext(next: Date | null, now: Date): string | null {
   if (!next) return null;
   const mins = Math.round(minutesBetween(now, next));
-  if (mins <= 0) return "nu";
-  if (mins < 60) return `om ${mins} min`;
-  return `om ${Math.round(mins / 60)} h`;
+  if (mins <= 0) return "now";
+  if (mins < 60) return `in ${mins} min`;
+  return `in ${Math.round(mins / 60)} h`;
 }

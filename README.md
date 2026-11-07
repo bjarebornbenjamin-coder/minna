@@ -1,4 +1,6 @@
-# Minna 🧠
+# Minna
+
+> Engelsk app med mörk, futuristisk design och en interaktiv 3D-kärna (Three.js / React Three Fiber).
 
 En personlig assistent som kommer ihåg åt dig, och tjatar tills det är gjort. Den kan användas privat, på jobbet och i skolan.
 
@@ -42,8 +44,9 @@ All data sparas lokalt i webbläsaren (localStorage).
 
 ```
 src/
-  app/            sidor: Idag (/), /paminnelser, /rutiner, /schema, /installningar
+  app/            sidor: Today (/), /chat, /tasks, /routines, /school, /settings
   components/     UI-komponenter + NagEngine (tjat-motorn)
+  components/core 3D-kärnan (MinnaCore) med reservbild om WebGL saknas
   lib/
     types.ts      datamodell
     store.tsx     tillstånd + lagring

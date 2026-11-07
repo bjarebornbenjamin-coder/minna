@@ -1,4 +1,4 @@
-/** Leverantörsoberoende chattformat (fungerar med både OpenAI och Claude) */
+/** Provider-neutral chat format (works with both OpenAI and Claude) */
 
 export interface ToolCall {
   id: string;
@@ -15,7 +15,7 @@ export interface AssistantMessage {
   role: "assistant";
   text: string;
   toolCalls: ToolCall[];
-  /** Leverantörens originalsvar som måste skickas tillbaka oförändrat (används av Claude) */
+  /** The provider's original reply, which must be sent back unchanged (used by Claude) */
   raw?: unknown;
   provider?: "openai" | "anthropic";
 }

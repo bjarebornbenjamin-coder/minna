@@ -14,7 +14,7 @@ function toAnthropic(messages: ChatMessage[]): Anthropic.Beta.BetaMessageParam[]
   return messages.map((m): Anthropic.Beta.BetaMessageParam => {
     if (m.role === "user") return { role: "user", content: m.text };
     if (m.role === "assistant") {
-      // Claudes eget svar skickas tillbaka oförändrat (krävs för thinking-block)
+      // Claude's own reply is sent back unchanged (required for thinking blocks)
       if (m.provider === "anthropic" && Array.isArray(m.raw)) {
         return { role: "assistant", content: m.raw as Anthropic.Beta.BetaContentBlockParam[] };
       }

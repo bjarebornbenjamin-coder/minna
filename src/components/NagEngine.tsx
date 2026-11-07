@@ -23,9 +23,9 @@ interface Toast {
 const TICK_MS = 15000;
 
 /**
- * Går igenom påminnelser och checklistor regelbundet och tjatar när det är dags.
- * Fungerar medan appen är öppen (eller ligger i en bakgrundsflik). Riktiga push-notiser
- * när appen är helt stängd kräver en server, det kommer i ett senare steg.
+ * Checks reminders and checklists regularly and nags when it's time.
+ * Works while the app is open (or in a background tab). Real push notifications
+ * when the app is fully closed need a server; that comes in a later step.
  */
 export function NagEngine() {
   const store = useStore();
@@ -117,12 +117,12 @@ export function NagEngine() {
     };
   }, [ready]);
 
-  // Kolla direkt när påminnelser, listor eller schema ändras (t.ex. en ny som redan har passerat)
+  // Check right away when reminders, lists or the schedule change (e.g. a new one that is already due)
   useEffect(() => {
     if (ready) tickRef.current();
   }, [state.reminders, state.routines, state.school, state.settings, ready]);
 
-  // Visa antal förfallna i fliktiteln
+  // Show the number of overdue items in the tab title
   useEffect(() => {
     if (!ready) return;
     const now = new Date();
@@ -142,17 +142,17 @@ export function NagEngine() {
         <div
           key={t.key}
           role="alert"
-          className={`pointer-events-auto w-full max-w-md rounded-2xl bg-white dark:bg-zinc-900 shadow-xl ring-2 ${AREAS[t.area].ring} p-4 animate-[slidein_.25s_ease-out]`}
+          className={`pointer-events-auto w-full max-w-md rounded-3xl border border-white/10 bg-[#0d1022]/90 backdrop-blur-xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.9)] ring-1 ${AREAS[t.area].ring} ${AREAS[t.area].glow} p-4 animate-[slidein_.3s_cubic-bezier(.2,.8,.2,1)]`}
         >
           <div className="flex items-start gap-3">
             <div className="flex-1 min-w-0">
               <p className="font-semibold">{t.title}</p>
-              <p className="text-sm text-zinc-600 dark:text-zinc-300 mt-0.5">{t.body}</p>
+              <p className="text-sm text-zinc-300 mt-0.5">{t.body}</p>
             </div>
             <button
               onClick={() => dismiss(t.key)}
-              className="text-zinc-400 hover:text-zinc-600 -mt-1 -mr-1 p-1"
-              aria-label="Stäng"
+              className="text-zinc-500 hover:text-zinc-200 -mt-1 -mr-1 p-1"
+              aria-label="Dismiss"
             >
               ✕
             </button>
@@ -166,11 +166,11 @@ export function NagEngine() {
                 }}
                 className="btn-primary flex-1"
               >
-                ✓ Klar
+                ✓ Done
               </button>
             ) : (
-              <Link href="/#listor" onClick={() => dismiss(t.key)} className="btn-primary flex-1 text-center">
-                Öppna listan
+              <Link href="/#lists" onClick={() => dismiss(t.key)} className="btn-primary flex-1 text-center">
+                Open list
               </Link>
             )}
             <button

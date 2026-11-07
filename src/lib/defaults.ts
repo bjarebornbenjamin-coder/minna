@@ -5,49 +5,49 @@ export function uid(): string {
 }
 
 const DEFAULT_SUBJECTS: Subject[] = [
-  { id: "matte", name: "Matte", items: ["Mattebok", "Miniräknare"] },
-  { id: "svenska", name: "Svenska", items: ["Svenskabok"] },
-  { id: "engelska", name: "Engelska", items: ["Engelskabok"] },
-  { id: "idrott", name: "Idrott", items: ["Gympakläder", "Handduk", "Vattenflaska"] },
-  { id: "no", name: "NO", items: ["NO-bok"] },
-  { id: "so", name: "SO", items: ["SO-bok"] },
+  { id: "math", name: "Math", items: ["Math book", "Calculator"] },
+  { id: "english", name: "English", items: ["English book"] },
+  { id: "science", name: "Science", items: ["Science notebook"] },
+  { id: "history", name: "History", items: ["History book"] },
+  { id: "pe", name: "PE", items: ["Gym clothes", "Towel", "Water bottle"] },
+  { id: "art", name: "Art", items: ["Sketchbook", "Pencils"] },
 ];
 
 export function defaultRoutines(areas: AreaId[]): Routine[] {
   const r: Routine[] = [
     {
       id: uid(),
-      name: "Innan du går hemifrån",
+      name: "Before you leave home",
       emoji: "🚪",
       area: "privat",
       time: "07:15",
       days: [1, 2, 3, 4, 5],
       nag: "normal",
-      items: ["Nycklar", "Mobil", "Plånbok / busskort", "Laddare"].map((text) => ({ id: uid(), text })),
+      items: ["Keys", "Phone", "Wallet / bus pass", "Charger"].map((text) => ({ id: uid(), text })),
     },
   ];
   if (areas.includes("jobb")) {
     r.push({
       id: uid(),
-      name: "Planera arbetsdagen",
+      name: "Plan your workday",
       emoji: "🗂️",
       area: "jobb",
       time: "08:30",
       days: [1, 2, 3, 4, 5],
       nag: "mild",
-      items: ["Gå igenom dagens möten", "Välj dagens 3 viktigaste uppgifter", "Kolla inkorgen efter deadlines"].map(
+      items: ["Review today's meetings", "Pick your top 3 tasks", "Check inbox for deadlines"].map(
         (text) => ({ id: uid(), text }),
       ),
     });
     r.push({
       id: uid(),
-      name: "Avsluta arbetsveckan",
+      name: "Wrap up the work week",
       emoji: "✅",
       area: "jobb",
       time: "15:30",
       days: [5],
       nag: "mild",
-      items: ["Följ upp obesvarade mejl", "Uppdatera status på projekt", "Planera måndagen"].map((text) => ({
+      items: ["Follow up on unanswered emails", "Update project status", "Plan Monday"].map((text) => ({
         id: uid(),
         text,
       })),
@@ -56,13 +56,13 @@ export function defaultRoutines(areas: AreaId[]): Routine[] {
   if (areas.includes("privat")) {
     r.push({
       id: uid(),
-      name: "Kvällsavslut",
+      name: "Evening wind-down",
       emoji: "🌙",
       area: "privat",
       time: "21:30",
       days: [0, 1, 2, 3, 4, 5, 6],
       nag: "mild",
-      items: ["Mobilen på laddning", "Kolla morgondagen i appen", "Kläder till imorgon"].map((text) => ({
+      items: ["Phone on the charger", "Check tomorrow in Minna", "Lay out clothes for tomorrow"].map((text) => ({
         id: uid(),
         text,
       })),
@@ -87,11 +87,11 @@ export function initialState(): AppState {
     school: {
       subjects: DEFAULT_SUBJECTS,
       schedule: {
-        1: ["matte", "svenska", "so"],
-        2: ["engelska", "idrott", "no"],
-        3: ["matte", "svenska", "engelska"],
-        4: ["no", "idrott", "so"],
-        5: ["matte", "engelska", "svenska"],
+        1: ["math", "english", "history"],
+        2: ["science", "pe", "art"],
+        3: ["math", "english", "science"],
+        4: ["history", "pe", "art"],
+        5: ["math", "science", "english"],
       },
       packTime: "20:00",
       morningTime: "07:00",
