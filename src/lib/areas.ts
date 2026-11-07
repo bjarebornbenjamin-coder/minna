@@ -12,7 +12,7 @@ export const NAG_LEVELS: Record<NagLevel, { label: string; desc: string }> = {
   av: { label: "Off", desc: "Shows in your list, no notification" },
   mild: { label: "Gentle", desc: "One notification" },
   normal: { label: "Normal", desc: "Reminds again after 15 min, then every hour" },
-  mamma: { label: "Mom Mode", desc: "Reminds you every 10 minutes until it's done" },
+  mamma: { label: "Focus Mode", desc: "Reminds you every 10 minutes until it's done" },
 };
 
 export const REPEATS: Record<Repeat, string> = {

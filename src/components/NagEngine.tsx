@@ -13,7 +13,7 @@ import type { AreaId } from "@/lib/types";
 
 interface Toast {
   key: string;
-  mom?: boolean;
+  focus?: boolean;
   kind: "reminder" | "list";
   refId: string;
   title: string;
@@ -59,7 +59,7 @@ export function NagEngine() {
         fired.push({
           key: `r:${r.id}`,
           kind: "reminder",
-          mom: r.nag === "mamma",
+          focus: r.nag === "mamma",
           refId: r.id,
           title: r.title,
           body: reminderMessage(r.title, settings.tone, r.nagCount, settings.name),
@@ -104,7 +104,9 @@ export function NagEngine() {
         for (const t of fired) {
           void showSystemNotification(t.title, t.body, t.key);
         }
-        if ("vibrate" in navigator) navigator.vibrate?.([120, 60, 120]);
+        // Only vibrate after the user has interacted with the page (browsers block it otherwise)
+        const activation = (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation;
+        if ("vibrate" in navigator && activation?.hasBeenActive) navigator.vibrate([120, 60, 120]);
       }
     };
 
@@ -146,8 +148,8 @@ export function NagEngine() {
           role="alert"
           className={`pointer-events-auto relative w-full max-w-sm overflow-hidden rounded-md border border-line bg-surface p-4 pl-5 shadow-[0_16px_40px_-20px_rgba(0,0,0,0.35)] animate-[slidein_.35s_cubic-bezier(.16,1,.3,1)]`}
         >
-          <span aria-hidden className={`absolute left-0 top-0 bottom-0 w-1 ${t.mom ? "bg-amber" : "bg-accent"}`} />
-          <p className="eyebrow mb-1">{t.mom ? "Mom Mode" : AREAS[t.area].label}</p>
+          <span aria-hidden className={`absolute left-0 top-0 bottom-0 w-1 ${t.focus ? "bg-vermilion" : "bg-accent"}`} />
+          <p className="eyebrow mb-1">{t.focus ? "Focus Mode" : AREAS[t.area].label}</p>
           <div className="flex items-start gap-3">
             <div className="flex-1 min-w-0">
               <p className="font-semibold">{t.title}</p>

@@ -7,9 +7,9 @@ const AREA = {
 } as const;
 const NAG = {
   type: "string",
-  enum: ["off", "gentle", "normal", "mom"],
+  enum: ["off", "gentle", "normal", "focus"],
   description:
-    "Nag level. off = no notification, gentle = one notification, normal = keeps reminding until done (default), mom = nags every 10 minutes. Use mom for things that absolutely must not be forgotten.",
+    "Nag level. off = no notification, gentle = one notification, normal = keeps reminding until done (default), focus = Focus Mode, reminds every 10 minutes until done. Use focus for things that absolutely must not be forgotten.",
 } as const;
 const REPEAT = {
   type: "string",
@@ -157,7 +157,7 @@ How you work:
 - When the user mentions something to remember, a deadline, an exam, a meeting or something to bring: create reminders right away with the tools. Only ask if something is so unclear that you can't pick a reasonable time.
 - Pick sensible times yourself: date only: 8:00 AM that day (7:00 AM for things to bring to school or work). "Tonight": 7:00 PM. "After school/work": 4:00 PM and 5:30 PM respectively.
 - Deadlines and exams: create one reminder for the event itself and one or more preparatory ones (e.g. study the day before, start the assignment a few days earlier).
-- Things to bring: set the reminder the evening before (around 8:00 PM) with nag level mom.
+- Things to bring: set the reminder the evening before (around 8:00 PM) with nag level focus (Focus Mode).
 - Choose the area (personal/work/school) from context, among the user's active areas.
 - If the user lists many things at once, create one reminder per item in the same response.
 - Recurring things with several parts (e.g. pack the gym bag every Monday) work better as a routine.

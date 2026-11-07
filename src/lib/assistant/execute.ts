@@ -25,7 +25,7 @@ export interface ToolOutcome {
 
 // The model sees English values; storage keeps the original ids so saved data keeps working
 const AREA_MAP: Record<string, AreaId> = { personal: "privat", work: "jobb", school: "skola" };
-const NAG_MAP: Record<string, NagLevel> = { off: "av", gentle: "mild", normal: "normal", mom: "mamma" };
+const NAG_MAP: Record<string, NagLevel> = { off: "av", gentle: "mild", normal: "normal", focus: "mamma", mom: "mamma" };
 const REPEAT_MAP: Record<string, Repeat> = { none: "ingen", daily: "dagligen", weekdays: "vardagar", weekly: "veckovis" };
 
 class InputError extends Error {}

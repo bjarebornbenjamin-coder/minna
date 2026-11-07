@@ -243,7 +243,7 @@ export default function ChatPage() {
               New chat
             </button>
           )}
-          {!empty && <Core size={64} state={phase} float={false} shadow={false} />}
+          {!empty && <Core size={64} state={phase} float={false} shadow={false} tilt={false} />}
         </div>
       </div>
 

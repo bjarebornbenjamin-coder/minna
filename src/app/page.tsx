@@ -7,7 +7,7 @@ import { Reveal } from "@/components/site/Reveal";
 const NAV = [
   { href: "#product", label: "Product" },
   { href: "#how", label: "How it works" },
-  { href: "#mom-mode", label: "Mom Mode" },
+  { href: "#focus-mode", label: "Focus Mode" },
   { href: "#about", label: "About" },
 ];
 
@@ -25,6 +25,19 @@ const NAGS = [
   { t: "6:20 PM", text: "One more gentle nudge: pack your gym bag. It'll feel good once it's done." },
   { t: "6:24 PM", text: "Done.", done: true },
 ];
+
+/** Each letter rises in on its own, slightly after the previous one */
+function Letters({ text, start = 0 }: { text: string; start?: number }) {
+  return (
+    <>
+      {text.split("").map((c, i) => (
+        <span key={i} className="char" style={{ animationDelay: `${(start + i) * 55 + 60}ms` }}>
+          {c}
+        </span>
+      ))}
+    </>
+  );
+}
 
 export default function Home() {
   return (
@@ -52,13 +65,15 @@ export default function Home() {
         {/* Hero */}
         <section className="relative flex min-h-[100svh] flex-col justify-end pt-24 pb-8 sm:pb-10" aria-labelledby="hero-title">
           <div className="relative mx-auto w-full max-w-[1600px]">
-            <h1 id="hero-title" className="display relative z-0 px-3 text-ink sm:px-6">
-              <span className="block animate-rise text-[31vw] leading-[0.8] sm:text-[24vw] 2xl:text-[23rem]">Meet</span>
-              <span
-                className="block animate-rise text-right text-[31vw] leading-[0.8] sm:text-[24vw] 2xl:text-[23rem]"
-                style={{ animationDelay: "120ms" }}
-              >
-                Minna<span className="text-vermilion">.</span>
+            <h1 id="hero-title" aria-label="Meet Minna." className="display relative z-0 px-3 text-ink sm:px-6">
+              <span aria-hidden className="block text-[31vw] leading-[0.8] sm:text-[24vw] 2xl:text-[23rem]">
+                <Letters text="Meet" />
+              </span>
+              <span aria-hidden className="block text-right text-[31vw] leading-[0.8] sm:text-[24vw] 2xl:text-[23rem]">
+                <Letters text="Minna" start={4} />
+                <span className="char text-vermilion" style={{ animationDelay: `${9 * 55 + 120}ms` }}>
+                  .
+                </span>
               </span>
             </h1>
             {/* The Core sits in front of the type: beside "Meet", cutting into the top of "Minna." */}
@@ -161,27 +176,27 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Section 2: Mom Mode */}
-        <section id="mom-mode" className="scroll-mt-10 py-20 sm:py-28" aria-labelledby="mom-title">
+        {/* Section 2: Focus Mode */}
+        <section id="focus-mode" className="scroll-mt-10 py-20 sm:py-28" aria-labelledby="focus-title">
           <div className="mx-auto grid max-w-[1600px] items-center gap-12 px-5 sm:px-10 lg:grid-cols-12">
             <div className="relative z-10 lg:col-span-6">
               <Reveal>
-                <p className="eyebrow !text-[#9a6a12]">Mom Mode</p>
-                <h2 id="mom-title" className="display mt-4 text-[22vw] sm:text-[14vw] lg:text-[10vw] xl:text-[10rem]">
-                  She
+                <p className="eyebrow !text-vermilion">Focus Mode</p>
+                <h2 id="focus-title" className="display mt-4 text-[22vw] sm:text-[14vw] lg:text-[10vw] xl:text-[10rem]">
+                  Until it&apos;s
                   <br />
-                  remembers.
+                  done.
                 </h2>
                 <p className="mt-6 max-w-md text-xl leading-snug">
                   The important things shouldn&apos;t depend on you remembering every detail.
                 </p>
                 <p className="mt-4 max-w-md text-ink-2">
-                  Turn on Mom Mode for anything that can&apos;t slip. Minna reminds you, then again every ten minutes, until you
+                  Turn on Focus Mode for anything that can&apos;t slip. Minna reminds you, then again every ten minutes, until you
                   mark it done.
                 </p>
               </Reveal>
               <Reveal delay={150}>
-                <ul className="mt-10 max-w-md border-l-2 border-amber pl-5" aria-label="Example of Mom Mode reminders">
+                <ul className="mt-10 max-w-md border-l-2 border-vermilion pl-5" aria-label="Example of Focus Mode reminders">
                   {NAGS.map((n) => (
                     <li key={n.t} className="grid grid-cols-[4.5rem_1fr] gap-3 py-2 text-sm">
                       <span className="tabular-nums text-ink-2">{n.t}</span>
@@ -194,7 +209,7 @@ export default function Home() {
             <Reveal className="relative aspect-[4/3] lg:col-span-6 lg:-mr-10 lg:aspect-[5/4]" delay={100}>
               <Image
                 src="/assets/minna-editorial/minna-mom-mode.png"
-                alt="The Minna Core beside a checklist, its band glowing amber at the edge"
+                alt="The Minna Core beside a checklist"
                 fill
                 sizes="(min-width: 1024px) 50vw, 100vw"
                 className="object-cover"

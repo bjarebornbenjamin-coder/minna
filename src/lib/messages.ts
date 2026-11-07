@@ -20,7 +20,7 @@ export function reminderMessage(title: string, tone: Tone, nagCount: number, nam
       `${who}${who ? lower : title}. Your brain asked me to tell you.`,
       `Psst… ${lower}. I have nothing better to do than nag you.`,
       `Third time's the charm? ${title}.`,
-      `Okay, full Mom Mode: ${title}. Now, please.`,
+      `Still open: ${title}. Now is a good time.`,
     ],
   };
   return pick(variants[tone], nagCount);

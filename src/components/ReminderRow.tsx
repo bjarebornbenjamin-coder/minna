@@ -7,14 +7,16 @@ import { describeNext, nextNagAt } from "@/lib/nag";
 import { useStore } from "@/lib/store";
 import type { Reminder } from "@/lib/types";
 import { AreaTag } from "./AreaTag";
+import { useBurn } from "./Burn";
 import { ReminderForm } from "./ReminderForm";
 
 export function ReminderRow({ r, now }: { r: Reminder; now: Date }) {
   const { completeReminder, deleteReminder, updateReminder, snoozeReminder, state } = useStore();
   const [editing, setEditing] = useState(false);
   const [menu, setMenu] = useState(false);
+  const { ref: burnRef, burning, burn, burnStyle, burnLayer } = useBurn();
   const overdue = !r.done && new Date(r.due) <= now;
-  const mom = r.nag === "mamma";
+  const focus = r.nag === "mamma";
 
   if (editing) {
     return (
@@ -39,12 +41,19 @@ export function ReminderRow({ r, now }: { r: Reminder; now: Date }) {
   const nextText = describeNext(next, now);
 
   return (
-    <li className={`group relative flex items-start gap-3 border-b border-line py-3.5 ${r.done ? "opacity-50" : ""}`}>
-      {overdue && <span aria-hidden className={`absolute -left-3 top-4 bottom-4 w-0.5 ${mom ? "bg-amber" : "bg-vermilion"}`} />}
+    <li
+      ref={(el) => {
+        burnRef.current = el;
+      }}
+      className={`group relative flex items-start gap-3 border-b border-line py-3.5 ${r.done ? "opacity-50" : ""} ${burning ? "pointer-events-none" : ""}`}
+      style={burnStyle}
+    >
+      {burnLayer}
+      {overdue && <span aria-hidden className={`absolute -left-3 top-4 bottom-4 w-0.5 ${focus ? "bg-vermilion" : "bg-accent-ink"}`} />}
       <button
-        onClick={() => completeReminder(r.id)}
-        className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border transition-colors ${
-          r.done ? "border-ink bg-ink text-white" : "border-ink-2/50 hover:border-ink"
+        onClick={() => (r.done ? completeReminder(r.id) : burn(() => completeReminder(r.id)))}
+        className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border ${
+          r.done ? "border-ink bg-ink text-white" : "heat border-ink-2/50"
         }`}
         aria-label={r.done ? `Mark “${r.title}” as not done` : `Mark “${r.title}” as done`}
       >
@@ -62,7 +71,7 @@ export function ReminderRow({ r, now }: { r: Reminder; now: Date }) {
           <span className={overdue ? "font-medium text-ink" : ""}>{formatDue(r.due, now)}</span>
           {state.settings.areas.length > 1 && <AreaTag area={r.area} />}
           {r.repeat !== "ingen" && <span>{REPEATS[r.repeat]}</span>}
-          {mom && <span className="font-medium text-[#9a6a12]">{NAG_LEVELS.mamma.label}</span>}
+          {focus && <span className="font-medium text-vermilion">{NAG_LEVELS.mamma.label}</span>}
           {nextText && !r.done && <span>Next reminder {nextText}</span>}
         </div>
       </div>
@@ -79,13 +88,13 @@ export function ReminderRow({ r, now }: { r: Reminder; now: Date }) {
                 <>
                   <MenuItem onClick={() => (snoozeReminder(r.id, 10), setMenu(false))}>Snooze 10 min</MenuItem>
                   <MenuItem onClick={() => (snoozeReminder(r.id, 60), setMenu(false))}>Snooze 1 hour</MenuItem>
-                  <MenuItem onClick={() => (updateReminder(r.id, { nag: mom ? "normal" : "mamma" }), setMenu(false))}>
-                    {mom ? "Turn off Mom Mode" : "Turn on Mom Mode"}
+                  <MenuItem onClick={() => (updateReminder(r.id, { nag: focus ? "normal" : "mamma" }), setMenu(false))}>
+                    {focus ? "Turn off Focus Mode" : "Turn on Focus Mode"}
                   </MenuItem>
                 </>
               )}
               <MenuItem onClick={() => (setEditing(true), setMenu(false))}>Edit details</MenuItem>
-              <MenuItem danger onClick={() => deleteReminder(r.id)}>
+              <MenuItem danger onClick={() => (setMenu(false), burn(() => deleteReminder(r.id)))}>
                 Delete
               </MenuItem>
             </div>

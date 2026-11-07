@@ -13,7 +13,7 @@ const NAV: NavItem[] = [
   { href: "/app", label: "Today" },
   { href: "/app/chat", label: "Chat" },
   { href: "/app/tasks", label: "Tasks" },
-  { href: "/app/mom-mode", label: "Mom Mode" },
+  { href: "/app/focus", label: "Focus Mode" },
   { href: "/app/routines", label: "Routines" },
   { href: "/app/school", label: "School", area: "skola" },
   { href: "/app/memory", label: "Memory" },
@@ -24,7 +24,7 @@ const MOBILE: NavItem[] = [
   { href: "/app", label: "Today" },
   { href: "/app/chat", label: "Chat" },
   { href: "/app/tasks", label: "Tasks" },
-  { href: "/app/mom-mode", label: "Mom" },
+  { href: "/app/focus", label: "Focus" },
   { href: "/app/more", label: "More" },
 ];
 

@@ -46,7 +46,7 @@ export default function TodayPage() {
 
   const openLists = lists.filter((l) => remainingItems(state, l).length > 0).length;
   const todo = overdue.length + laterToday.length + openLists;
-  const momActive = overdue.some((r) => r.nag === "mamma");
+  const focusActive = overdue.some((r) => r.nag === "mamma");
 
   return (
     <div>
@@ -56,11 +56,11 @@ export default function TodayPage() {
           <h1 className="display mt-3 text-[clamp(3.5rem,11vw,7.5rem)]">{greeting(now, settings.name)}.</h1>
           <p className="mt-4 text-ink-2">
             {todo === 0 ? "Nothing waiting right now." : `${todo} ${todo === 1 ? "thing" : "things"} to keep track of today.`}{" "}
-            {momActive && <span className="font-medium text-[#9a6a12]">Mom Mode is on for something you missed.</span>}
+            {focusActive && <span className="font-medium text-vermilion">Something on Focus Mode is waiting.</span>}
           </p>
         </div>
         <Link href="/app/chat" aria-label="Ask Minna" className="hidden sm:block">
-          <Core size={150} state={momActive ? "mom" : "idle"} />
+          <Core size={150} state={focusActive ? "focus" : "idle"} />
         </Link>
       </header>
 
