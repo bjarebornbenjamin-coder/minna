@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Minna 🧠
 
-## Getting Started
+En personlig assistent som kommer ihåg åt dig, och tjatar tills det är gjort. Den kan användas privat, på jobbet och i skolan.
 
-First, run the development server:
+## Kom igång
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Öppna sedan http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Det här finns nu (steg 1–2)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Områden:** Privat 🏠, Jobb 💼 och Skola 🎒. Slå på de du vill ha.
+- **Påminnelser** med tid, upprepning och **tjat-nivå** (av / mild / normal / mamma-läge).
+- **Idag-vy:** det som väntar, senare idag, checklistor och imorgon.
+- **Rutiner och checklistor**, till exempel "Innan du går hemifrån" eller "Planera arbetsdagen".
+- **Skolschema:** Du får packlista kvällen innan och en morgonkoll, utifrån vilka ämnen du har.
+- **Ton:** varm, saklig eller rolig.
+- **Arbetstid:** inga jobbnotiser utanför arbetstid.
+- **Notiser** i webbläsaren, och appen kan läggas på hemskärmen (PWA).
+- **Backup:** exportera och importera data.
 
-## Learn More
+All data sparas lokalt i webbläsaren (localStorage).
 
-To learn more about Next.js, take a look at the following resources:
+## Struktur
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+src/
+  app/            sidor: Idag (/), /paminnelser, /rutiner, /schema, /installningar
+  components/     UI-komponenter + NagEngine (tjat-motorn)
+  lib/
+    types.ts      datamodell
+    store.tsx     tillstånd + lagring
+    nag.ts        när det ska tjatas
+    checklists.ts rutiner och packlistor
+    messages.ts   texter per ton
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Nästa steg
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+3. AI-assistent (Claude API): skriv eller prata naturligt, till exempel "påminn mig på fredag att ringa tandläkaren".
+4. Google Kalender och Gmail.
+5. Jobbfunktioner: mötesförberedelser, uppföljningar, veckorapport.
+6. Konto och synk (Supabase) och push-notiser när appen är stängd.
+7. Mobilapp med Expo.

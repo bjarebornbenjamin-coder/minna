@@ -1,0 +1,13 @@
+{
+  "name": "Minna – din personliga assistent",
+  "short_name": "Minna",
+  "description": "Kommer ihåg åt dig, privat, på jobbet och i skolan.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f6f5f2",
+  "theme_color": "#7c3aed",
+  "lang": "sv",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
