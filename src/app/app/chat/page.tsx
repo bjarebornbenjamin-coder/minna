@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Mark, type MarkState } from "@/components/Mark";
+import { RichText } from "@/components/RichText";
 import type { AssistantMessage, ChatMessage, ToolResultMessage, TurnResult } from "@/lib/assistant/chat-types";
 import { buildContext } from "@/lib/assistant/context";
 import { executeTool, type ChatAction } from "@/lib/assistant/execute";
@@ -16,6 +17,16 @@ interface ChatState {
 
 const CHAT_KEY = "minna:chat:v2";
 const MAX_STEPS = 8;
+/** How many recent messages are sent to the assistant */
+const HISTORY_LIMIT = 40;
+
+/** Keeps the latest messages, always starting at a user message so tool calls stay paired */
+function recent(messages: ChatMessage[]): ChatMessage[] {
+  if (messages.length <= HISTORY_LIMIT) return messages;
+  let start = messages.length - HISTORY_LIMIT;
+  while (start < messages.length && messages[start].role !== "user") start++;
+  return messages.slice(start);
+}
 
 function loadChat(): ChatState {
   try {
@@ -44,10 +55,11 @@ function saveChat(c: ChatState) {
 }
 
 const SUGGESTIONS: Record<string, string[]> = {
-  skola: ["I have a chemistry exam on Thursday", "We have PE tomorrow, remind me about my gym clothes"],
-  jobb: ["I promised to send Eric the quote on Friday", "Remind me to prep for my meeting with Anna tomorrow at 10"],
-  privat: ["Call the dentist tomorrow morning", "Make a gym packing list for Mondays and Thursdays"],
+  skola: ["Explain photosynthesis like I'm 14", "I have a chemistry exam on Thursday, help me plan", "Quiz me on World War II"],
+  jobb: ["Write a short email asking to move my meeting to Friday", "Help me plan a week with three deadlines"],
+  privat: ["What can I cook with eggs, spinach and rice?", "Remind me to call the dentist tomorrow morning"],
 };
+const GENERAL = ["Write a message to my teacher that I'm sick today", "Help me plan my week"];
 
 /* Voice input (Web Speech API) */
 interface SpeechRec {
@@ -125,7 +137,7 @@ export default function ChatPage() {
         const res = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json", ...(code && { "x-minna-code": code }) },
-          body: JSON.stringify({ messages: state.messages, context: buildContext(storeRef.current.getState()) }),
+          body: JSON.stringify({ messages: recent(state.messages), context: buildContext(storeRef.current.getState()) }),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
@@ -220,7 +232,7 @@ export default function ChatPage() {
   if (!loaded) return null;
 
   const areas = store.state.settings.areas;
-  const suggestions = areas.flatMap((a) => SUGGESTIONS[a] ?? []).slice(0, 4);
+  const suggestions = [...areas.flatMap((a) => SUGGESTIONS[a] ?? []), ...GENERAL].slice(0, 5);
   const name = store.state.settings.name;
   const empty = chat.messages.length === 0;
 
@@ -254,11 +266,11 @@ export default function ChatPage() {
               <h1 className="display text-[clamp(3.25rem,9vw,6rem)]">
                 {name ? `Hi, ${name}.` : "Hi."}
                 <br />
-                What&apos;s coming up?
+                What can I help with?
               </h1>
               <p className="mt-4 max-w-md text-ink-2">
-                Write like you would to a person. Minna adds the reminders and checklists for you, and you can list several
-                things at once.
+                Ask anything: homework, an email, a plan for the week. When something needs remembering, Minna adds the
+                reminder for you.
               </p>
             </div>
             <Mark size={170} state={phase} draw className="mx-auto" />
@@ -328,7 +340,7 @@ export default function ChatPage() {
           ref={inputRef}
           className="max-h-40 flex-1 resize-none bg-transparent px-2 py-2 text-base outline-none focus-visible:outline-none placeholder:text-ink-2/70 sm:text-sm"
           rows={1}
-          placeholder={listening ? "Listening" : "Message Minna"}
+          placeholder={listening ? "Listening" : "Ask Minna anything"}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
@@ -372,7 +384,12 @@ function MessageView({ msg, actions, onUndo }: { msg: ChatMessage; actions: Reco
 
   return (
     <div className="flex max-w-[92%] flex-col gap-2 self-start animate-fade">
-      {text && <div className="whitespace-pre-wrap leading-relaxed">{text.replace(/\*\*(.+?)\*\*/g, "$1")}</div>}
+      {text && (
+        <div className="group/msg">
+          <RichText text={text} />
+          <CopyButton text={text} />
+        </div>
+      )}
       {m.toolCalls.length > 0 && (
         <ul className="border-l border-line pl-4">
           {m.toolCalls.map((t) => {
@@ -395,5 +412,25 @@ function MessageView({ msg, actions, onUndo }: { msg: ChatMessage; actions: Reco
         </ul>
       )}
     </div>
+  );
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      className="btn-ghost mt-1 -ml-2 text-xs opacity-60 transition-opacity hover:opacity-100 focus-visible:opacity-100 group-hover/msg:opacity-100"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        } catch {
+          // clipboard blocked
+        }
+      }}
+    >
+      {copied ? "Copied" : "Copy"}
+    </button>
   );
 }

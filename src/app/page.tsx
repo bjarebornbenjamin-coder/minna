@@ -10,10 +10,10 @@ const NAV = [
 ];
 
 const CAPABILITIES = [
-  { n: "01", title: "Scheduling", text: "Tell Minna what's coming up. It picks sensible times and sets the reminders." },
-  { n: "02", title: "Organization", text: "Personal, work and school in one place, each with its own routines." },
+  { n: "01", title: "Ask anything", text: "Homework explained step by step, an email drafted, a week planned. In plain language." },
+  { n: "02", title: "Reminders", text: "Tell Minna what's coming up. It picks sensible times and sets the reminders." },
   { n: "03", title: "Routines", text: "Checklists that come back on the right days, from packing your bag to wrapping up the week." },
-  { n: "04", title: "Memory", text: "Optional. Lasting preferences you choose to keep, so suggestions get better." },
+  { n: "04", title: "Memory", text: "Optional. Lasting preferences you choose to keep, so help fits you better." },
   { n: "05", title: "Email and calendar", text: "Gmail, Outlook and Google Calendar are next on the roadmap.", soon: true },
 ];
 

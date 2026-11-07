@@ -70,11 +70,11 @@ export default function TodayPage() {
         <ReminderForm compact defaultArea={filter === "alla" ? undefined : filter} onSubmit={addReminder} />
       </div>
       <p className="mb-8 text-sm text-ink-2">
-        Or just{" "}
+        Or{" "}
         <Link href="/app/chat" className="link text-ink">
-          tell Minna
+          ask Minna
         </Link>{" "}
-        what&apos;s coming up, in your own words.
+        anything: homework, an email, a plan for the week.
       </p>
 
       <AreaFilter value={filter} onChange={setFilter} />
