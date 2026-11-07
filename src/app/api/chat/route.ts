@@ -1,85 +1,88 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { ASSISTANT_TOOLS, SYSTEM_PROMPT } from "@/lib/assistant/tools";
+import OpenAI from "openai";
+import type { ChatMessage, TurnResult } from "@/lib/assistant/chat-types";
+import { runAnthropicTurn } from "@/lib/assistant/providers/anthropic";
+import { runOpenAITurn } from "@/lib/assistant/providers/openai";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const MODEL = process.env.MINNA_MODEL || "claude-opus-5-5";
-
 interface ChatRequest {
-  messages: Anthropic.Beta.BetaMessageParam[];
+  messages: ChatMessage[];
   context: string;
 }
 
+function fail(error: string, message: string, status: number) {
+  return Response.json({ error, message }, { status });
+}
+
 export async function POST(req: Request) {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return Response.json(
-      { error: "missing_key", message: "ANTHROPIC_API_KEY saknas på servern." },
-      { status: 503 },
-    );
+  // OpenAI används om den nyckeln finns, annars Claude
+  const provider = process.env.OPENAI_API_KEY ? "openai" : process.env.ANTHROPIC_API_KEY ? "anthropic" : null;
+  if (!provider) {
+    return fail("missing_key", "Ingen API-nyckel på servern (OPENAI_API_KEY eller ANTHROPIC_API_KEY).", 503);
   }
 
   // Valfri åtkomstkod så att inte vem som helst med länken kan använda (och betala för) chatten
   const code = process.env.MINNA_ACCESS_CODE;
   if (code && req.headers.get("x-minna-code") !== code) {
-    return Response.json({ error: "forbidden", message: "Fel eller saknad åtkomstkod." }, { status: 401 });
+    return fail("forbidden", "Fel eller saknad åtkomstkod.", 401);
   }
 
   let body: ChatRequest;
   try {
     body = (await req.json()) as ChatRequest;
   } catch {
-    return Response.json({ error: "bad_request", message: "Ogiltig förfrågan." }, { status: 400 });
+    return fail("bad_request", "Ogiltig förfrågan.", 400);
   }
   if (!Array.isArray(body.messages) || body.messages.length === 0 || typeof body.context !== "string") {
-    return Response.json({ error: "bad_request", message: "Ogiltig förfrågan." }, { status: 400 });
+    return fail("bad_request", "Ogiltig förfrågan.", 400);
   }
 
-  const client = new Anthropic();
-
   try {
-    const response = await client.beta.messages.create({
-      model: MODEL,
-      max_tokens: 16000,
-      // Chatt: låg effort räcker och ger snabba svar
-      thinking: { type: "adaptive" },
-      output_config: { effort: "low" },
-      // Om modellen avböjer av säkerhetsskäl får en reservmodell ta över i samma anrop
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
-      system: [
-        // Stabil del först så att den kan cachas
-        { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
-        // Aktuell tid och användarens data ändras varje gång
-        { type: "text", text: body.context },
-      ],
-      tools: ASSISTANT_TOOLS,
-      messages: body.messages,
-    });
-
-    return Response.json({ content: response.content, stop_reason: response.stop_reason });
+    const result: TurnResult =
+      provider === "openai"
+        ? await runOpenAITurn(body.messages, body.context)
+        : await runAnthropicTurn(body.messages, body.context);
+    return Response.json(result);
   } catch (error) {
-    if (error instanceof Anthropic.AuthenticationError) {
-      return Response.json({ error: "auth", message: "API-nyckeln är ogiltig." }, { status: 502 });
+    // OpenAI-fel
+    if (error instanceof OpenAI.AuthenticationError) return fail("auth", "OpenAI-nyckeln är ogiltig.", 502);
+    if (error instanceof OpenAI.RateLimitError) {
+      if (error.code === "insufficient_quota") {
+        return fail(
+          "quota",
+          "OpenAI-kontot saknar krediter. Fyll på under Billing på platform.openai.com.",
+          402,
+        );
+      }
+      return fail("rate_limit", "För många förfrågningar just nu, försök igen om en stund.", 429);
     }
+    if (error instanceof OpenAI.NotFoundError) {
+      return fail("model", "Modellen finns inte för ditt konto. Byt OPENAI_MODEL.", 502);
+    }
+    if (error instanceof OpenAI.BadRequestError) {
+      console.error("OpenAI bad request:", error.message);
+      return fail("bad_request", "Konversationen kunde inte skickas. Testa att starta en ny chatt.", 400);
+    }
+    if (error instanceof OpenAI.APIError) {
+      console.error(`OpenAI API error ${error.status}:`, error.message);
+      return fail("api", "OpenAI svarar inte just nu. Försök igen.", 502);
+    }
+    // Claude-fel
+    if (error instanceof Anthropic.AuthenticationError) return fail("auth", "Claude-nyckeln är ogiltig.", 502);
     if (error instanceof Anthropic.RateLimitError) {
-      return Response.json(
-        { error: "rate_limit", message: "För många förfrågningar just nu, försök igen om en stund." },
-        { status: 429 },
-      );
+      return fail("rate_limit", "För många förfrågningar just nu, försök igen om en stund.", 429);
     }
     if (error instanceof Anthropic.BadRequestError) {
       console.error("Claude bad request:", error.message);
-      return Response.json(
-        { error: "bad_request", message: "Konversationen kunde inte skickas. Testa att starta en ny chatt." },
-        { status: 400 },
-      );
+      return fail("bad_request", "Konversationen kunde inte skickas. Testa att starta en ny chatt.", 400);
     }
     if (error instanceof Anthropic.APIError) {
       console.error(`Claude API error ${error.status}:`, error.message);
-      return Response.json({ error: "api", message: "Claude svarar inte just nu. Försök igen." }, { status: 502 });
+      return fail("api", "Claude svarar inte just nu. Försök igen.", 502);
     }
     console.error(error);
-    return Response.json({ error: "unknown", message: "Något gick fel." }, { status: 500 });
+    return fail("unknown", "Något gick fel.", 500);
   }
 }

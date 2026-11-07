@@ -1,21 +1,18 @@
 "use client";
 
-import type Anthropic from "@anthropic-ai/sdk";
 import { useEffect, useRef, useState } from "react";
+import type { AssistantMessage, ChatMessage, ToolResultMessage, TurnResult } from "@/lib/assistant/chat-types";
 import { buildContext } from "@/lib/assistant/context";
 import { executeTool, type ChatAction } from "@/lib/assistant/execute";
 import { useStore } from "@/lib/store";
 
-type Msg = Anthropic.Beta.BetaMessageParam;
-type Block = Anthropic.Beta.BetaContentBlock;
-
 interface ChatState {
-  messages: Msg[];
-  /** tool_use_id -> vad som hände */
+  messages: ChatMessage[];
+  /** verktygsanropets id -> vad som hände */
   actions: Record<string, ChatAction>;
 }
 
-const CHAT_KEY = "minna:chat:v1";
+const CHAT_KEY = "minna:chat:v2";
 const MAX_STEPS = 8;
 
 function loadChat(): ChatState {
@@ -98,7 +95,7 @@ export default function ChatPage() {
     setBusy(true);
 
     let state: ChatState = {
-      messages: [...chat.messages, { role: "user", content: trimmed }],
+      messages: [...chat.messages, { role: "user", text: trimmed }],
       actions: { ...chat.actions },
     };
     update(state);
@@ -128,32 +125,26 @@ export default function ChatPage() {
           return;
         }
 
-        const content = data.content as Block[];
-        // Skicka tillbaka hela svaret oförändrat (inkl. thinking-block) nästa gång
-        state = { ...state, messages: [...state.messages, { role: "assistant", content }] };
+        const turn = data as TurnResult;
+        // Svaret sparas oförändrat så att det kan skickas tillbaka nästa gång
+        state = { ...state, messages: [...state.messages, turn.message] };
         update(state);
 
-        if (data.stop_reason === "refusal") {
+        if (turn.stop === "refusal") {
           setError({ message: "Det där kan jag tyvärr inte hjälpa till med." });
           return;
         }
-        if (data.stop_reason !== "tool_use") return;
+        if (turn.stop !== "tool_use" || turn.message.toolCalls.length === 0) return;
 
-        const results: Anthropic.Beta.BetaToolResultBlockParam[] = [];
+        const results: ToolResultMessage["results"] = [];
         const actions = { ...state.actions };
-        for (const block of content) {
-          if (block.type !== "tool_use") continue;
-          const outcome = executeTool(block.name, block.input, storeRef.current);
-          results.push({
-            type: "tool_result",
-            tool_use_id: block.id,
-            content: outcome.content,
-            ...(outcome.isError && { is_error: true }),
-          });
-          if (outcome.action) actions[block.id] = outcome.action;
+        for (const call of turn.message.toolCalls) {
+          const outcome = executeTool(call.name, call.input, storeRef.current);
+          results.push({ id: call.id, content: outcome.content, ...(outcome.isError && { isError: true }) });
+          if (outcome.action) actions[call.id] = outcome.action;
         }
         // Alla resultat i ett och samma meddelande
-        state = { messages: [...state.messages, { role: "user", content: results }], actions };
+        state = { messages: [...state.messages, { role: "tool", results }], actions };
         update(state);
       }
     } catch {
@@ -255,8 +246,8 @@ export default function ChatPage() {
             <p className="font-medium text-rose-700 dark:text-rose-300">{error.message}</p>
             {error.code === "missing_key" && (
               <p className="text-zinc-600 dark:text-zinc-400 mt-1">
-                Lägg in en API-nyckel från console.anthropic.com som miljövariabeln ANTHROPIC_API_KEY (i Vercel: Settings →
-                Environment Variables) och publicera om.
+                Lägg in din OpenAI-nyckel som miljövariabeln OPENAI_API_KEY (i Vercel: Settings → Environment Variables) och
+                publicera om.
               </p>
             )}
             {error.code === "forbidden" && (
@@ -314,28 +305,21 @@ function MessageView({
   actions,
   onUndo,
 }: {
-  msg: Msg;
+  msg: ChatMessage;
   actions: Record<string, ChatAction>;
   onUndo: (id: string) => void;
 }) {
   if (msg.role === "user") {
-    if (typeof msg.content === "string") {
-      return (
-        <div className="self-end max-w-[85%] rounded-2xl rounded-br-md bg-violet-600 text-white px-4 py-2.5 whitespace-pre-wrap">
-          {msg.content}
-        </div>
-      );
-    }
-    return null; // verktygsresultat visas som åtgärder under assistentens svar
+    return (
+      <div className="self-end max-w-[85%] rounded-2xl rounded-br-md bg-violet-600 text-white px-4 py-2.5 whitespace-pre-wrap">
+        {msg.text}
+      </div>
+    );
   }
+  if (msg.role === "tool") return null; // resultat visas som åtgärder under assistentens svar
 
-  const blocks = (typeof msg.content === "string" ? [{ type: "text", text: msg.content }] : msg.content) as Block[];
-  const text = blocks
-    .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === "text")
-    .map((b) => b.text)
-    .join("\n")
-    .trim();
-  const toolUses = blocks.filter((b): b is Anthropic.Beta.BetaToolUseBlock => b.type === "tool_use");
+  const m: AssistantMessage = msg;
+  const text = m.text.trim();
 
   return (
     <div className="self-start max-w-[90%] flex flex-col gap-2">
@@ -344,9 +328,9 @@ function MessageView({
           {text.replace(/\*\*(.+?)\*\*/g, "$1")}
         </div>
       )}
-      {toolUses.length > 0 && (
+      {m.toolCalls.length > 0 && (
         <ul className="flex flex-col gap-1.5">
-          {toolUses.map((t) => {
+          {m.toolCalls.map((t) => {
             const a = actions[t.id];
             if (!a) return null;
             return (

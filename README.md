@@ -15,14 +15,14 @@ npm run dev
 
 Skriv eller prata som till en person, till exempel *"Jag har kemiprov på torsdag"* eller *"Gör en packlista för gymmet måndagar och torsdagar"*. Minna lägger in påminnelser, rutiner och packlistor automatiskt. Varje sak den skapar kan ångras direkt i chatten.
 
-Chatten kräver en API-nyckel från https://console.anthropic.com:
+Chatten kräver en API-nyckel från **OpenAI** (https://platform.openai.com/api-keys) eller **Claude** (https://console.anthropic.com). Finns `OPENAI_API_KEY` används OpenAI, annars Claude.
 
-- **Lokalt:** kopiera `.env.example` till `.env.local` och fyll i `ANTHROPIC_API_KEY`.
-- **Vercel:** Settings → Environment Variables → lägg till `ANTHROPIC_API_KEY` (och gärna `MINNA_ACCESS_CODE`), och publicera om.
+- **Lokalt:** kopiera `.env.example` till `.env.local` och fyll i nyckeln.
+- **Vercel:** Settings → Environment Variables → lägg till `OPENAI_API_KEY` (och gärna `MINNA_ACCESS_CODE`), och publicera om.
 
 Om du sätter `MINNA_ACCESS_CODE` måste samma kod anges i appen under Inställningar → Chatt. Det hindrar andra som hittar länken från att använda din API-nyckel.
 
-Tekniskt: `src/app/api/chat/route.ts` anropar Claude med verktyg (`src/lib/assistant/tools.ts`). Verktygen körs i webbläsaren (`src/lib/assistant/execute.ts`), där all data finns.
+Tekniskt: `src/app/api/chat/route.ts` väljer leverantör och anropar den via `src/lib/assistant/providers/`. Verktygen (`src/lib/assistant/tools.ts`) körs i webbläsaren (`src/lib/assistant/execute.ts`), där all data finns.
 
 ## Det här finns nu (steg 1–3)
 

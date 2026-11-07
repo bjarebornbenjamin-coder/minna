@@ -1,4 +1,4 @@
-import type Anthropic from "@anthropic-ai/sdk";
+import type { ToolDef } from "./chat-types";
 
 const AREA = { type: "string", enum: ["privat", "jobb", "skola"], description: "Vilket område saken hör till" } as const;
 const NAG = {
@@ -17,13 +17,13 @@ const LOCAL_TIME = {
   description: "Lokal tid i formatet YYYY-MM-DDTHH:mm, t.ex. 2026-11-12T07:30",
 } as const;
 
-/** Verktyg som Claude kan använda. De körs i webbläsaren, där användarens data finns. */
-export const ASSISTANT_TOOLS: Anthropic.Beta.BetaTool[] = [
+/** Verktyg som assistenten kan använda. De körs i webbläsaren, där användarens data finns. */
+export const ASSISTANT_TOOLS: ToolDef[] = [
   {
     name: "create_reminder",
     description:
       "Skapar en påminnelse som ger notis vid angiven tid. Använd för allt användaren vill komma ihåg: saker att göra, ta med, deadlines, möten, samtal. Anropa en gång per sak; flera anrop i samma svar går bra.",
-    input_schema: {
+    parameters: {
       type: "object",
       properties: {
         title: { type: "string", description: "Kort, konkret titel i imperativ, t.ex. 'Ta med engelskaboken'" },
@@ -40,7 +40,7 @@ export const ASSISTANT_TOOLS: Anthropic.Beta.BetaTool[] = [
   {
     name: "update_reminder",
     description: "Ändrar en befintlig påminnelse (t.ex. flyttar tiden). Ange bara fälten som ska ändras.",
-    input_schema: {
+    parameters: {
       type: "object",
       properties: {
         id: { type: "string", description: "Påminnelsens id från kontexten" },
@@ -58,7 +58,7 @@ export const ASSISTANT_TOOLS: Anthropic.Beta.BetaTool[] = [
   {
     name: "complete_reminder",
     description: "Markerar en påminnelse som klar (upprepade flyttas till nästa gång). Använd när användaren säger att något är gjort.",
-    input_schema: {
+    parameters: {
       type: "object",
       properties: { id: { type: "string" } },
       required: ["id"],
@@ -68,7 +68,7 @@ export const ASSISTANT_TOOLS: Anthropic.Beta.BetaTool[] = [
   {
     name: "delete_reminder",
     description: "Tar bort en påminnelse permanent. Använd bara när användaren uttryckligen ber om att ta bort den.",
-    input_schema: {
+    parameters: {
       type: "object",
       properties: { id: { type: "string" } },
       required: ["id"],
@@ -79,7 +79,7 @@ export const ASSISTANT_TOOLS: Anthropic.Beta.BetaTool[] = [
     name: "create_routine",
     description:
       "Skapar en återkommande checklista (rutin) som dyker upp vissa veckodagar vid en viss tid och tjatar tills allt är avbockat, t.ex. 'Packa gymväskan' eller 'Innan du går hemifrån'.",
-    input_schema: {
+    parameters: {
       type: "object",
       properties: {
         name: { type: "string" },
@@ -101,7 +101,7 @@ export const ASSISTANT_TOOLS: Anthropic.Beta.BetaTool[] = [
   {
     name: "add_routine_items",
     description: "Lägger till saker i en befintlig rutin/checklista.",
-    input_schema: {
+    parameters: {
       type: "object",
       properties: {
         id: { type: "string", description: "Rutinens id från kontexten" },
@@ -115,7 +115,7 @@ export const ASSISTANT_TOOLS: Anthropic.Beta.BetaTool[] = [
     name: "set_subject_items",
     description:
       "Skolschema: anger vad som ska med till ett ämne (ersätter listan). Skapar ämnet om det inte finns. Används för packlistorna kvällen innan.",
-    input_schema: {
+    parameters: {
       type: "object",
       properties: {
         subject: { type: "string", description: "Ämnets namn, t.ex. 'Engelska'" },
